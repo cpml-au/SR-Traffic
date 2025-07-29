@@ -1,0 +1,11 @@
+name: SR-Traffic
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+  - pip
+  - pip:
+      - pre-commit
+      - pytest
+      - black
+      - flake8
