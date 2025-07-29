@@ -1,0 +1,62 @@
+# template for traffic parameters file
+gp:
+  num_individuals: 1
+  generations: 1
+  multi_island:
+    num_islands: 1
+    migration: { "freq": 10, "frac": 0.05 }
+  crossover_prob: 0.
+  mut_prob: 0.
+  frac_elitist: 0
+  min_: 2
+  max_: 4
+  overlapping_generation: True
+  validate: False
+  penalty: { "method": "length", "reg_param": 0.01}
+  select:
+    #fun: self.tournament_with_elitism
+    fun: random.sample
+    #kargs: "{'tournsize': 2, 'stochastic_tourn': { 'enabled': True, 'prob': [0.8, 0.2] }}"
+    kargs: "{'k': self.NINDIVIDUALS}"
+  mutate:
+    fun: gp.mixedMutate
+    kargs: "{'expr': self.toolbox.expr_mut, 'pset': self.pset, 'prob': [0.7, 0.2, 0.1]}" # string is important
+    expr_mut: gp.genHalfAndHalf
+    expr_mut_kargs: "{'min_': 2, 'max_': 4}"
+  crossover:
+    fun: gp.cxOnePoint
+    kargs: "{}"
+  immigration: { "enabled": False, "freq": 10, "frac": 0.9 }
+  primitives:
+    imports: { "alpine.gp.cochain_primitives": ["coch_primitives"],
+              "alpine.gp.jax_primitives": ["jax_primitives"]} 
+    used:  [
+    {"name": "AddF", "dimension": None, "rank": None},
+    {"name": "SubF", "dimension": None, "rank": None},
+    {"name": "MulF", "dimension": None, "rank": None},
+    {"name": "Div", "dimension": None, "rank": None},
+    {"name": "SquareF", "dimension": None, "rank": None},
+    {"name": "SqrtF", "dimension": None, "rank": None},
+    {"name": "ExpF", "dimension": None, "rank": None},
+    #{"name": "LogF", "dimension": None, "rank": None},
+    {"name": "AddC", "dimension": ["0", "1"], "rank": ["SC"]},
+    {"name": "SubC", "dimension": ["0", "1"], "rank": ["SC"]},
+    {"name": "Square", "dimension": ["0", "1"], "rank": ["SC"]},
+    {"name": "Sqrt", "dimension": ["0", "1"], "rank": ["SC"]},
+    {"name": "MF", "dimension": ["0", "1"], "rank": ["SC"]},
+    {"name": "Exp", "dimension": ["0", "1"], "rank": ["SC"]},
+    #{"name": "Log", "dimension": ["0", "1"], "rank": ["SC"]},
+    { "name": "cob", "dimension": ["0"], "rank": ["SC"] },
+    { "name": "del", "dimension": ["1"], "rank": ["SC"] },
+    { "name": "St1", "dimension": ["0", "1"], "rank": ["SC"] },
+    { "name": "MF", "dimension": ["0", "1"], "rank": ["SC"] },
+    { "name": "InvM", "dimension": ["0", "1"], "rank": ["SC"] },
+    { "name": "CMul", "dimension": ["0", "1"], "rank": ["SC"] },
+    #{ "name": "Inn", "dimension": ["0", "1"], "rank": ["SC"] },
+  ]
+  num_cpus: 1
+  batch_size: 1
+  max_calls: 2
+  road_name: "US80"
+  ansatz: {"flux": Weidmann_flux, "v": Weidmann_v, "opt_coeffs":  [0.58670242, 0.71605332, 0.32424757]}
+  # ansatz: {"flux": IDM_flux, "v": inverse_IDM, "opt_coeffs": [0.43936351, 0.93094344, 0.16251414, 0.61353022]}
