@@ -44,3 +44,6 @@ venv.bak/
 # IDE directories
 .idea/
 .vscode/
+
+# ignore
+*.png

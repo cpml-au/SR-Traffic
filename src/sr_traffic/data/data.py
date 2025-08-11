@@ -4,7 +4,6 @@ from typing import Tuple
 import numpy.typing as npt
 from dctkit import config
 from sklearn.model_selection import train_test_split
-from alpine.data import Dataset
 from dctkit.mesh.simplex import SimplicialComplex
 from dctkit.dec import cochain as C
 from dctkit.dec.flat import flat
@@ -164,6 +163,7 @@ def build_dataset(
     density: npt.NDArray,
     velocity: npt.NDArray,
     flow: npt.NDArray,
+    task: str,
 ) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray, npt.NDArray]:
     dual_edges = C.CochainD1(S, S.dual_edges_vectors)
     zeros = C.CochainD0(S, np.zeros_like(density[:, 0]))
@@ -190,140 +190,60 @@ def build_dataset(
     flow_data = fP0.coeffs[:-1]
 
     num_t_points = velocity_data.shape[1]
-    num_x_points = velocity_data[1:-3].shape[0]
 
-    # time splitting (prediction)
-    tr_test_tuple = train_test_split(
-        np.arange(num_t_points),
-        velocity_data.T,
-        test_size=0.4,
-        random_state=42,
-        shuffle=False,
-    )
-    t_tr_idx, t_test_idx, _, _ = tr_test_tuple
-    x_idx = np.arange(1, density.shape[0] - 3)
+    if task == "prediction":
+        # time splitting (prediction)
+        tr_test_tuple = train_test_split(
+            np.arange(num_t_points),
+            velocity_data.T,
+            test_size=0.4,
+            random_state=42,
+            shuffle=False,
+        )
+        t_tr_idx, t_test_idx, _, _ = tr_test_tuple
+        x_idx = np.arange(1, density.shape[0] - 3)
 
-    _, t_tr = np.meshgrid(x_idx, t_tr_idx)
-    _, t_test = np.meshgrid(x_idx, t_test_idx)
+        _, ax_tr = np.meshgrid(x_idx, t_tr_idx)
+        _, ax_test = np.meshgrid(x_idx, t_test_idx)
+        rho_tr = density[1:-3, t_tr_idx].ravel("F")
+        rho_test = density[1:-3, t_test_idx].ravel("F")
 
-    # space splitting (reconstruction)
+        v_tr = velocity_data[1:-3, t_tr_idx].ravel("F")
+        v_test = velocity_data[1:-3, t_test_idx].ravel("F")
 
-    # tr_test_tuple = train_test_split(
-    #     np.arange(num_x_points),
-    #     velocity_data[1:-3],
-    #     test_size=0.8,
-    #     random_state=42,
-    #     shuffle=True,
-    # )
-    # x_tr_idx, x_test_idx, _, _ = tr_test_tuple
-    # # reorder indices
-    # x_tr_idx = np.sort(x_tr_idx)
-    # x_test_idx = np.sort(x_test_idx)
-    # t_idx = np.arange(num_t_points)
+        f_tr = flow_data[1:-3, t_tr_idx].ravel("F")
+        f_test = flow_data[1:-3, t_test_idx].ravel("F")
+    elif task == "reconstruction":
+        # space splitting (reconstruction)
+        num_x_points = velocity_data[1:-3].shape[0]
 
-    # x_tr, _ = np.meshgrid(x_tr_idx, t_idx)
-    # x_test, _ = np.meshgrid(x_test_idx, t_idx)
+        tr_test_tuple = train_test_split(
+            np.arange(num_x_points),
+            velocity_data[1:-3],
+            test_size=0.8,
+            random_state=42,
+            shuffle=True,
+        )
+        x_tr_idx, x_test_idx, _, _ = tr_test_tuple
+        # reorder indices
+        x_tr_idx = np.sort(x_tr_idx)
+        x_test_idx = np.sort(x_test_idx)
+        t_idx = np.arange(num_t_points)
 
-    rho_tr = density[1:-3, t_tr_idx].ravel("F")
-    rho_test = density[1:-3, t_test_idx].ravel("F")
+        ax_tr, _ = np.meshgrid(x_tr_idx, t_idx)
+        ax_test, _ = np.meshgrid(x_test_idx, t_idx)
 
-    v_tr = velocity_data[1:-3, t_tr_idx].ravel("F")
-    v_test = velocity_data[1:-3, t_test_idx].ravel("F")
+        rho_tr = density[1:-3, :][x_tr_idx, :].ravel("F")
+        rho_test = density[1:-3, :][x_test_idx, :].ravel("F")
 
-    f_tr = flow_data[1:-3, t_tr_idx].ravel("F")
-    f_test = flow_data[1:-3, t_test_idx].ravel("F")
+        v_tr = velocity_data[1:-3, :][x_tr_idx, :].ravel("F")
+        v_test = velocity_data[1:-3, :][x_test_idx, :].ravel("F")
 
-    # rho_tr = density[1:-3, :][x_tr_idx, :].ravel("F")
-    # rho_test = density[1:-3, :][x_test_idx, :].ravel("F")
-
-    # v_tr = velocity_data[1:-3, :][x_tr_idx, :].ravel("F")
-    # v_test = velocity_data[1:-3, :][x_test_idx, :].ravel("F")
-
-    # f_tr = flow_data[1:-3, :][x_tr_idx, :].ravel("F")
-    # f_test = flow_data[1:-3, :][x_test_idx, :].ravel("F")
+        f_tr = flow_data[1:-3, :][x_tr_idx, :].ravel("F")
+        f_test = flow_data[1:-3, :][x_test_idx, :].ravel("F")
 
     # build X
-    X_tr = np.column_stack((t_tr.ravel(), rho_tr, v_tr, f_tr))
-    X_test = np.column_stack((t_test.ravel(), rho_test, v_test, f_test))
+    X_tr = np.column_stack((ax_tr.ravel(), rho_tr, v_tr, f_tr))
+    X_test = np.column_stack((ax_test.ravel(), rho_test, v_test, f_test))
 
     return X_tr, X_test
-
-
-if __name__ == "__main__":
-    data_info = preprocess_data("US80")
-    X_training, X_test = build_dataset(
-        data_info["t_sampled_circ"],
-        data_info["S"],
-        data_info["density"],
-        data_info["v"],
-        data_info["flow"],
-    )
-
-    x_sampled = data_info["x_sampled"]
-    x_sampled_circ = (x_sampled[1:] + x_sampled[:-1]) / 2
-    num_x = len(x_sampled_circ)
-    num_t = len(data_info["t_sampled_circ"])
-
-    # PLOTS
-    rho = np.nan * np.zeros((num_x, len(data_info["t_sampled_circ"])))
-    v = np.nan * np.zeros((num_x, len(data_info["t_sampled_circ"])))
-    f = np.nan * np.zeros((num_x, len(data_info["t_sampled_circ"])))
-
-    rho[:2, :] = np.tile(data_info["density"][0, :], (2, 1))
-    rho[-3:, :] = data_info["density"][-3:, :]
-    v[:2, :] = np.tile(data_info["v"][0, :], (2, 1))
-    f[:2, :] = np.tile(data_info["flow"][0, :], (2, 1))
-    v[-3:, :] = data_info["v"][-3:, :]
-    f[-3:, :] = data_info["flow"][-3:, :]
-
-    num_tr = int(X_training.shape[0] / num_t)
-    train_idx = X_training[:num_tr, 0].astype(np.int64)
-
-    # train_idx = np.arange(X_training[0, 0], X_training[-1, 0] + 1, dtype=np.int64)
-    # num_t_train = len(train_idx)
-
-    # rho[1:-3, train_idx] = X_training[:, 1].reshape((num_x - 4, num_t_train), order="F")
-    # v[1:-3, train_idx] = X_training[:, 2].reshape((num_x - 4, num_t_train), order="F")
-    # f[1:-3, train_idx] = X_training[:, 3].reshape((num_x - 4, num_t_train), order="F")
-
-    rho[1:-3, :][train_idx] = X_training[:, 1].reshape((num_tr, num_t), order="F")
-    v[1:-3, :][train_idx] = X_training[:, 2].reshape((num_tr, num_t), order="F")
-    f[1:-3, :][train_idx] = X_training[:, 3].reshape((num_tr, num_t), order="F")
-
-    x_mesh, t_mesh = np.meshgrid(x_sampled_circ, data_info["t_sampled_circ"])
-
-    import matplotlib.pyplot as plt
-
-    fontsize = 10
-    plt.rc("font", size=fontsize)
-    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-
-    rho_plot = axes[0].contourf(
-        t_mesh, x_mesh, rho.T, levels=100, cmap="rainbow", vmin=0, vmax=1
-    )
-    vel_plot = axes[1].contourf(t_mesh, x_mesh, v.T, levels=100, cmap="rainbow")
-    flux_plot = axes[2].contourf(t_mesh, x_mesh, f.T, levels=100, cmap="rainbow")
-
-    plt.colorbar(
-        rho_plot,
-        ax=axes[0],
-        label=r"$\rho$",
-        # ticks=[0, 0.2, 0.4, 0.6, 0.8, 1.0],
-        fraction=0.046,
-    )
-    plt.colorbar(vel_plot, ax=axes[1], label=r"$v$", fraction=0.046)
-    plt.colorbar(flux_plot, ax=axes[2], label=r"$f$", fraction=0.046)
-    axes[0].set_title("density")
-    axes[1].set_title("velocity")
-    axes[2].set_title("flux")
-    for i in range(3):
-        axes[i].set_xlabel("$t$")
-        axes[i].set_ylabel("$x$")
-        axes[i].set_xlim(
-            np.min(data_info["t_sampled_circ"]), np.max(data_info["t_sampled_circ"])
-        )
-        axes[i].set_ylim(
-            np.min(data_info["x_sampled"][1:-1]), np.max(data_info["x_sampled"][1:-1])
-        )
-    plt.tight_layout()
-    plt.savefig("data_plot_i80.png", dpi=300, bbox_inches="tight")
