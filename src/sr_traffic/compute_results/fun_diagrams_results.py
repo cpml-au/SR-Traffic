@@ -15,29 +15,33 @@ import matplotlib.colors as mcolors
 import matplotlib.patches as patches
 
 
-def sr_term(rho, flats, params):
-    ones = C.Cochain(rho.dim, rho.is_primal, rho.complex, jnp.ones_like(rho.coeffs))
-    conv_term = C.convolution(
-        C.codifferential(flats["linear_left_P"](C.exp(C.scalar_mul(rho, params[0])))),
-        C.exp(C.scalar_mul(rho, params[1])),
-        1,
-    )
-    sr_term = C.add(ones, conv_term)
-    # sr_term = C.square(
-    #     C.exp(
-    #         C.convolution(
-    #             C.codifferential(flats["linear_right_P"](rho)),
-    #             C.scalar_mul(rho, params[0]),
-    #             3,
-    #         )
-    #     )
-    # )
+def sr_term(rho, flats, params, task):
+    if task == "prediction":
+        ones = C.Cochain(rho.dim, rho.is_primal, rho.complex, jnp.ones_like(rho.coeffs))
+        conv_term = C.convolution(
+            C.codifferential(
+                flats["linear_left_P"](C.exp(C.scalar_mul(rho, params[0])))
+            ),
+            C.exp(C.scalar_mul(rho, params[1])),
+            1,
+        )
+        sr_term = C.add(ones, conv_term)
+    elif task == "reconstruction":
+        sr_term = C.square(
+            C.exp(
+                C.convolution(
+                    C.codifferential(flats["linear_right_P"](rho)),
+                    C.scalar_mul(rho, params[0]),
+                    3,
+                )
+            )
+        )
     return sr_term
 
 
-def sr_flux_generator(flux, flats, params):
+def sr_flux_generator(flux, flats, params, task):
     def sr_flux(rho):
-        return C.cochain_mul(flux(rho), sr_term(rho, flats, params))
+        return C.cochain_mul(flux(rho), sr_term(rho, flats, params, task))
 
     return sr_flux
 
@@ -155,7 +159,22 @@ def plot_diagrams(results, rhoP0, v, f, name_diagram, test_name, train_idx, test
     plt.clf()
 
 
-def rho_v_plot(results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks):
+def make_rect(xy, width, height, color):
+    return patches.Rectangle(
+        xy,
+        width,
+        height,
+        linewidth=2,
+        edgecolor=color,
+        facecolor="none",
+        clip_on=False,
+        zorder=10,
+    )
+
+
+def rho_v_plot(
+    results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks, task
+):
     models_names = list(results.keys())
     num_models = len(models_names)
     data_list = [data_info["density"], v]
@@ -167,51 +186,30 @@ def rho_v_plot(results, data_info, v, x_sampled_circ, test_name, x_ticks, y_tick
     x_mesh, t_mesh = np.meshgrid(x_sampled_circ[:-3], data_info["t_sampled_circ"])
 
     cmap = "rainbow"
-
-    # Define rectangle parameters (x, y, width, height)
-    rect_0_train = patches.Rectangle(
-        (2.5, 10),
-        535.0,
-        1500.0,
-        linewidth=2,
-        edgecolor="red",
-        facecolor="none",
-        clip_on=False,
-        zorder=10,
-    )
-    rect_1_train = patches.Rectangle(
-        (2.5, 10),
-        535.0,
-        1500.0,
-        linewidth=2,
-        edgecolor="red",
-        facecolor="none",
-        clip_on=False,
-        zorder=10,
-    )
-    rect_0_test = patches.Rectangle(
-        (542.5, 10),
-        355,
-        1500.0,
-        linewidth=2,
-        edgecolor="#FF00FF",
-        facecolor="none",
-        clip_on=False,
-        zorder=10,
-    )
-    rect_1_test = patches.Rectangle(
-        (542.5, 10),
-        355,
-        1500.0,
-        linewidth=2,
-        edgecolor="#FF00FF",
-        facecolor="none",
-        clip_on=False,
-        zorder=10,
-    )
-    rect_train = [rect_0_train, rect_1_train]
-    rect_test = [rect_0_test, rect_1_test]
     cb_ticks = [[0, 0.1, 0.2], [1, 40, 75]]
+
+    if task == "prediction":
+        rect_0_train = make_rect((2.5, 10), 535.0, 1500.0, "red")
+        rect_1_train = make_rect((2.5, 10), 535.0, 1500.0, "red")
+        rect_0_test = make_rect((542.5, 10), 355, 1500.0, "#FF7F50")
+        rect_1_test = make_rect((542.5, 10), 355, 1500.0, "#FF7F50")
+
+        rect_train = [rect_0_train, rect_1_train]
+        rect_test = [rect_0_test, rect_1_test]
+    elif task == "reconstruction":
+        x_idx = x_sampled_circ[train_idx][:-4]
+        x_idx = [
+            50.0,
+            310.0,
+            430.0,
+            610.0,
+            770.0,
+            1050.0,
+            1210.0,
+            1330.0,
+            1430.0,
+        ]
+        x_magn = [40.0, 20.0, 80, 20, 20, 40, 40, 20, 40]
 
     for i, data_entry in enumerate(data_list):
         vmin = np.min(data_entry.T)
@@ -233,33 +231,13 @@ def rho_v_plot(results, data_info, v, x_sampled_circ, test_name, x_ticks, y_tick
             )
             # Title
             if i == 0:
-                axes[i, 0].add_patch(rect_train[i])
-                axes[i, 0].add_patch(rect_test[i])
-                # x_idx = x_sampled_circ[train_idx][:-4]
-                # x_idx = [
-                #     50.0,
-                #     310.0,
-                #     430.0,
-                #     610.0,
-                #     770.0,
-                #     1050.0,
-                #     1210.0,
-                #     1330.0,
-                #     1430.0,
-                # ]
-                # x_magn = [40.0, 20.0, 80, 20, 20, 40, 40, 20, 40]
-                # for k in range(len(x_idx)):
-                #     rect = patches.Rectangle(
-                #         (2.5, x_idx[k]),
-                #         895.0,
-                #         x_magn[k],
-                #         linewidth=0.8,
-                #         edgecolor="#FF00FF",
-                #         facecolor="none",
-                #         clip_on=False,
-                #         zorder=10,
-                #     )
-                #     axes[i, 0].add_patch(rect)
+                if task == "prediction":
+                    axes[i, 0].add_patch(rect_train[i])
+                    axes[i, 0].add_patch(rect_test[i])
+                elif task == "reconstruction":
+                    for k in range(len(x_idx)):
+                        rect = make_rect((2.5, x_idx[k]), 895.0, x_magn[k], "#FF00FF")
+                        axes[i, 0].add_patch(rect)
 
                 axes[i, 0].set_title("Data")
                 axes[i, j + 1].set_title(models_names[j])
@@ -360,26 +338,32 @@ def format_entry(val, rank, is_best):
     return f"\\textbf{{{formatted}}}" if is_best else formatted
 
 
-def fill_error_table(results, train_idx, test_idx):
+def fill_error_table(results, train_idx, test_idx, task):
     t_errors = []
+    if task == "prediction":
+        train_idx_slice = (slice(None), train_idx)
+        test_idx_slice = (slice(None), test_idx)
+    elif task == "reconstruction":
+        train_idx_slice = (train_idx, slice(None))
+        test_idx_slice = (test_idx, slice(None))
     for name, model in results.items():
         # training errors
         e_rho_train, e_v_train, _ = compute_errors(
-            data_info["density"][:, train_idx],
-            v[:, train_idx],
-            f[:, train_idx],
-            model["rho"][:, train_idx],
-            model["v"][:, train_idx],
-            model["f"][:, train_idx],
+            data_info["density"][train_idx_slice],
+            v[train_idx_slice],
+            f[train_idx_slice],
+            model["rho"][train_idx_slice],
+            model["v"][train_idx_slice],
+            model["f"][train_idx_slice],
         )
         # test errors
         e_rho_test, e_v_test, _ = compute_errors(
-            data_info["density"][:, test_idx],
-            v[:, test_idx],
-            f[:, test_idx],
-            model["rho"][:, test_idx],
-            model["v"][:, test_idx],
-            model["f"][:, test_idx],
+            data_info["density"][test_idx_slice],
+            v[test_idx_slice],
+            f[test_idx_slice],
+            model["rho"][test_idx_slice],
+            model["v"][test_idx_slice],
+            model["f"][test_idx_slice],
         )
 
         # e_tts = compute_tts_error(
@@ -433,7 +417,8 @@ def fill_error_table(results, train_idx, test_idx):
 
 
 road_name = "US80"
-test_name = "i80_prediction"
+task = "reconstruction"
+test_name = f"i80_{task}"
 data_info = preprocess_data(road_name)
 X_training, X_test = build_dataset(
     data_info["t_sampled_circ"],
@@ -441,6 +426,7 @@ X_training, X_test = build_dataset(
     data_info["density"],
     data_info["v"],
     data_info["flow"],
+    task,
 )
 
 # plot data
@@ -509,24 +495,25 @@ if road_name == "US101":
     x_ticks = [0, 675, 1350, 2025, 2700]
     y_ticks = [50, 505, 1010, 1515, 2070]
 elif road_name == "US80":
-    opt_greenshields = [0.54673127, 0.55995123]
-    opt_Weidmann = [0.63190729, 0.80612097, 0.24947817]
-    opt_triangular = [0.37013956, 1.48964708, 6.59672108]
-    opt_idm = [0.43936351, 0.93094344, 0.16251414, 0.61353022]
-    opt_del_castillo = [0.31807369, 0.46732741, 0.61532169, 2.60100492]
-    sr_greens_params = [2.86021508985409056436, -5.64427014751596534126]
-    sr_Weidmann_params = [2.12466407856669370346, -4.18665767293357760082]
-    sr_triangular_params = [2.72042969, -3.49581679932267430644]
-    sr_idm_params = [2.56095629955760983876, -0.66842648814023597481]
-    sr_del_castillo_params = [2.17247255542438466591, -0.09043064382541565749]
+    if task == "prediction":
+        opt_greenshields = [0.54673127, 0.55995123]
+        opt_Weidmann = [0.63190729, 0.80612097, 0.24947817]
+        opt_triangular = [0.37013956, 1.48964708, 6.59672108]
+        opt_idm = [0.43936351, 0.93094344, 0.16251414, 0.61353022]
+        opt_del_castillo = [0.31807369, 0.46732741, 0.61532169, 2.60100492]
+        sr_greens_params = [2.86021508985409056436, -5.64427014751596534126]
+        sr_Weidmann_params = [2.12466407856669370346, -4.18665767293357760082]
+        sr_triangular_params = [2.72042969, -3.49581679932267430644]
+        sr_idm_params = [2.56095629955760983876, -0.66842648814023597481]
+        sr_del_castillo_params = [2.17247255542438466591, -0.09043064382541565749]
 
-    # reconstruction
-    # opt_greenshields = [0.67221695, 0.53916011]
-    # opt_Weidmann = [0.58670242, 0.71605332, 0.32424757]
-    # opt_triangular = [0.37468432, 1.28975743, 7.48885539]
-    # sr_greens_params = [5.83882956394043795001]
-    # sr_Weidmann_params = [5.82940218613048344309]
-    # sr_triangular_params = [9.39984985913767445709]
+    elif task == "reconstruction":
+        opt_greenshields = [0.67221695, 0.53916011]
+        opt_Weidmann = [0.58670242, 0.71605332, 0.32424757]
+        opt_triangular = [0.37468432, 1.28975743, 7.48885539]
+        sr_greens_params = [5.83882956394043795001]
+        sr_Weidmann_params = [5.82940218613048344309]
+        sr_triangular_params = [9.39984985913767445709]
 
     x_ticks = [0, 450, 900]
     y_ticks = [10, 760, 1510]
@@ -573,7 +560,7 @@ models = {
 sr_models = {}
 for name, (flux_fn, _, params) in models.items():
     sr_name = "SR-" + name
-    sr_flux = sr_flux_generator(flux_fn, flats, params)
+    sr_flux = sr_flux_generator(flux_fn, flats, params, task)
     sr_flux_der = tf_utils.define_flux_der(S, sr_flux)
     sr_models[sr_name] = (sr_flux, sr_flux_der, params)
 
@@ -621,13 +608,15 @@ rhoP0, data_info["density"], v, f = rescale_rho_v_f(
 )
 
 
-train_idx = jnp.arange(X_training[0, 0], X_training[-1, 0] + 1, dtype=jnp.int64)
-test_idx = jnp.arange(X_test[0, 0], X_test[-1, 0] + 1, dtype=jnp.int64)
-# num_tr = int(X_training.shape[0] / len(data_info["t_sampled_circ"]))
-# num_test = int(X_test.shape[0] / len(data_info["t_sampled_circ"]))
-# train_idx = X_training[:num_tr, 0].astype(np.int64) + 1
-# train_idx = np.concatenate((train_idx, [0, 76, 77, 78]))
-# test_idx = X_test[:num_test, 0].astype(np.int64) + 1
+if task == "prediction":
+    train_idx = jnp.arange(X_training[0, 0], X_training[-1, 0] + 1, dtype=jnp.int64)
+    test_idx = jnp.arange(X_test[0, 0], X_test[-1, 0] + 1, dtype=jnp.int64)
+elif task == "reconstruction":
+    num_tr = int(X_training.shape[0] / len(data_info["t_sampled_circ"]))
+    num_test = int(X_test.shape[0] / len(data_info["t_sampled_circ"]))
+    train_idx = X_training[:num_tr, 0].astype(np.int64) + 1
+    train_idx = np.concatenate((train_idx, [0, 76, 77, 78]))
+    test_idx = X_test[:num_test, 0].astype(np.int64) + 1
 
 
 x_sampled_circ *= data_info["L_dim"]
@@ -649,9 +638,9 @@ plot_diagrams(
     sr_results, rhoP0, v, f, "velocity", test_name + "_sr", train_idx, test_idx
 )
 
-rho_v_plot(results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks)
+rho_v_plot(results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks, task)
 rho_v_plot(
-    sr_results, data_info, v, x_sampled_circ, test_name + "_sr", x_ticks, y_ticks
+    sr_results, data_info, v, x_sampled_circ, test_name + "_sr", x_ticks, y_ticks, task
 )
 
 
@@ -661,5 +650,5 @@ predicted_true_plots(sr_results, v, f, test_name + "_sr")
 
 
 # Table computation
-fill_error_table(results, train_idx, test_idx)
+fill_error_table(results, train_idx, test_idx, task)
 # fill_error_table(sr_results)
