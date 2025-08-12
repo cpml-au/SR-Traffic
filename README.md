@@ -1,11 +1,21 @@
 # SR-Traffic
 
-A short description of the project.
+This repository contains the code used to produce the results of the paper [SR-Traffic: Discovering Macroscopic Traffic Flow Models with Symbolic Regression](link)
 
 ## Installation
 
-Create a conda environment from the provided `environment.yaml`:
+The dependencies are collected in `environment.yaml` and can be installed, after cloning the repository, using [`mamba`]("https://github.com/mamba-org/mamba"):
 
 ```bash
-conda env create -f environment.yaml
-conda activate SR-Traffic
+$ mamba env create -f environment.yaml
+```
+
+Once the environment is installed and activated, install the library using
+
+```bash
+$ pip install .
+```
+
+## Usage
+
+## Citing

@@ -11,7 +11,7 @@ import sr_traffic.utils.fund_diagrams as fnd_diag
 from sr_traffic.utils.primitives import add_new_primitives
 from sr_traffic.utils.godunov import body_fun, main_loop
 from sr_traffic.data.data import preprocess_data, build_dataset
-from flex.gp import util
+from flex.gp import util, primitives
 from flex.gp.regressor import GPSymbolicRegressor
 from deap import gp
 from deap.base import Toolbox
@@ -35,6 +35,18 @@ os.environ["JAX_LOG_COMPILES"] = "0"
 config()
 
 
+class fitting_problem:
+    def __init__(self, general_fitness, n_constants):
+        self.general_fitness = general_fitness
+        self.n_constants = n_constants
+
+    def fitness(self, x):
+        return [self.general_fitness(x)]
+
+    def get_bounds(self):
+        return (-10.0 * jnp.ones(self.n_constants), 10.0 * jnp.ones(self.n_constants))
+
+
 # Helper to resolve function from string
 def resolve_function(full_name):
     module = importlib.import_module("traffic_flow.utils.fund_diagrams")
@@ -42,6 +54,7 @@ def resolve_function(full_name):
 
 
 def detect_nested_functions(equation):
+    # FIXME: move this
     # List of trigonometric functions
     conv_functions = ["conv"]
     nested = 0  # Flag to indicate if nested functions are found
@@ -100,6 +113,7 @@ def compute_error_rho_v_f(
     flux,
     flat_lin_left,
     S,
+    task,
 ):
     rho_v_f = main_loop(rho_0, single_iteration, num_t_points)
 
@@ -119,22 +133,26 @@ def compute_error_rho_v_f(
     f_computed = jnp.vstack([f_0[:-1].ravel("F"), f_1_T]).T
 
     # compute total error on the interior of the domain
-    # total_rho_error = (
-    #     100
-    #     * jnp.sum((rho_computed[1:-3, t_idx * step].ravel("F") - rho) ** 2)
-    #     / rho_norm
-    # )
-    # total_v_error = (
-    #     100 * jnp.sum((v_computed[1:-3, t_idx * step].ravel("F") - v) ** 2) / v_norm
-    # )
-    total_rho_error = (
-        100
-        * jnp.sum((rho_computed[1:-3, ::step][t_idx].ravel("F") - rho) ** 2)
-        / rho_norm
-    )
-    total_v_error = (
-        100 * jnp.sum((v_computed[1:-3, ::step][t_idx].ravel("F") - v) ** 2) / v_norm
-    )
+    if task == "prediction":
+        total_rho_error = (
+            100
+            * jnp.sum((rho_computed[1:-3, t_idx * step].ravel("F") - rho) ** 2)
+            / rho_norm
+        )
+        total_v_error = (
+            100 * jnp.sum((v_computed[1:-3, t_idx * step].ravel("F") - v) ** 2) / v_norm
+        )
+    elif task == "reconstruction":
+        total_rho_error = (
+            100
+            * jnp.sum((rho_computed[1:-3, ::step][t_idx].ravel("F") - rho) ** 2)
+            / rho_norm
+        )
+        total_v_error = (
+            100
+            * jnp.sum((v_computed[1:-3, ::step][t_idx].ravel("F") - v) ** 2)
+            / v_norm
+        )
     total_error = 0.5 * (total_rho_error + total_v_error)
 
     return total_error, rho_computed, v_computed, f_computed
@@ -220,14 +238,15 @@ def solve(
     step: float,
     flats: Dict,
     ansatz: Dict,
+    task: str,
 ) -> Tuple[float, npt.NDArray]:
-    # need to call config again before using JAX in energy evaluations to ma):
-    # x_idx = t_rho_v_f.X
-    #
-    num_original_t_points = int((num_t_points - 1) / step) + 1
-    num_x = int(X.shape[0] / num_original_t_points)
-    x_idx = X[:num_x, 0].astype(jnp.int64)
-    # t_idx = jnp.arange(X[0, 0], X[-1, 0] + 1, dtype=jnp.int64)
+
+    if task == "prediction":
+        idx = jnp.arange(X[0, 0], X[-1, 0] + 1, dtype=jnp.int64)
+    elif task == "reconstruction":
+        num_original_t_points = int((num_t_points - 1) / step) + 1
+        num_x = int(X.shape[0] / num_original_t_points)
+        idx = X[:num_x, 0].astype(jnp.int64)
 
     rho = X[:, 1]
     v = X[:, 2]
@@ -260,12 +279,13 @@ def solve(
         v_norm,
         rho_0,
         num_t_points,
-        x_idx,
+        idx,
         step,
         single_iteration,
         flux,
         flats["linear_left"],
         S,
+        task,
     )
 
     return total_error, {"rho": rho_comp, "v": v_comp, "f": f_comp}
@@ -283,6 +303,7 @@ def eval_MSE_sol(
     step: float,
     flats: Dict,
     ansatz: Dict,
+    task: str,
 ) -> Tuple[float, npt.NDArray]:
     # need to call config again before using JAX in energy evaluations to make sure that
     # the current worker has initialized JAX
@@ -300,6 +321,7 @@ def eval_MSE_sol(
         step,
         flats,
         ansatz,
+        task,
     )
     tol = 1e2
 
@@ -307,18 +329,6 @@ def eval_MSE_sol(
         total_err = tol
 
     return total_err, rho_v_dict
-
-
-class fitting_problem:
-    def __init__(self, general_fitness, n_constants):
-        self.general_fitness = general_fitness
-        self.n_constants = n_constants
-
-    def fitness(self, x):
-        return [self.general_fitness(x)]
-
-    def get_bounds(self):
-        return (-10.0 * jnp.ones(self.n_constants), 10.0 * jnp.ones(self.n_constants))
 
 
 def eval_MSE_and_tune_constants(
@@ -334,6 +344,7 @@ def eval_MSE_and_tune_constants(
     flats: Dict,
     rho_test: npt.NDArray,
     ansatz: Dict,
+    task: str,
     v_check_fn,
 ):
     warnings.filterwarnings("ignore")
@@ -342,8 +353,11 @@ def eval_MSE_and_tune_constants(
     config()
 
     individual, n_constants = util.compile_individual_with_consts(tree, toolbox)
-    # t_idx = jnp.arange(X[0, 0], X[-1, 0] + 1, dtype=jnp.int64)
-    # num_t_points_X = int(t_idx[-1] * step + 1)
+    if task == "prediction":
+        t_idx = jnp.arange(X[0, 0], X[-1, 0] + 1, dtype=jnp.int64)
+        num_t_points_X = int(t_idx[-1] * step + 1)
+    elif task == "reconstruction":
+        num_t_points_X = num_t_points
 
     def eval_err(consts):
         error, _ = solve(
@@ -353,11 +367,12 @@ def eval_MSE_and_tune_constants(
             rho_bnd,
             rho_0,
             S,
-            num_t_points,
+            num_t_points_X,
             delta_t,
             step,
             flats,
             ansatz,
+            task,
         )
         return error
 
@@ -369,7 +384,6 @@ def eval_MSE_and_tune_constants(
 
     objective = jit(eval_err)
 
-    # def general_fitness(x, threshold):
     def general_fitness(x):
         def ind_consts(t):
             return individual(t, x)
@@ -413,6 +427,7 @@ def eval_MSE(
     flats: Dict,
     rho_test: npt.NDArray,
     ansatz: Dict,
+    task: str,
     penalty: dict,
     v_check_fn,
 ) -> float:
@@ -433,6 +448,7 @@ def eval_MSE(
             step,
             flats,
             ansatz,
+            task,
         )
 
     return objvals
@@ -451,6 +467,7 @@ def predict(
     flats: Dict,
     rho_test: npt.NDArray,
     ansatz: Dict,
+    task: str,
     penalty: dict,
     v_check_fn,
 ) -> npt.NDArray:
@@ -470,6 +487,7 @@ def predict(
             step,
             flats,
             ansatz,
+            task,
         )
     return best_sols
 
@@ -487,6 +505,7 @@ def fitness(
     flats: Dict,
     rho_test: npt.NDArray,
     ansatz: Dict,
+    task: str,
     penalty: dict,
     v_check_fn,
 ) -> Tuple[float,]:
@@ -511,6 +530,7 @@ def fitness(
                 flats,
                 rho_test,
                 ansatz,
+                task,
                 v_check_fn,
             )
 
@@ -548,6 +568,7 @@ def set_prb(
 
     penalty = config_file_data["gp"]["penalty"]
     ansatz = config_file_data["gp"]["ansatz"]
+    task = config_file_data["gp"]["task"]
     ansatz["flux"] = resolve_function(ansatz["flux"])
     ansatz["v"] = resolve_function(ansatz["v"])
 
@@ -637,7 +658,6 @@ def set_prb(
     )
 
     # add float primitives
-    # pset.addPrimitive(jnp.pow, [float, float], float, name="pow")
 
     # add special primitives
     add_new_primitives(pset)
@@ -664,10 +684,11 @@ def set_prb(
         "flats": flats,
         "rho_test": rho_test,
         "ansatz": ansatz,
+        "task": task,
         "v_check_fn": v_check_fn,
     }
 
-    pset = util.add_primitives_to_pset_from_dict(
+    pset = primitives.add_primitives_to_pset_from_dict(
         pset, config_file_data["gp"]["primitives"]
     )
     num_cpus = config_file_data["gp"]["num_cpus"]
@@ -684,7 +705,6 @@ def set_prb(
         common_data=common_params,
         save_best_individual=True,
         save_train_fit_history=True,
-        plot_best_individual_tree=False,
         output_path=output_path,
         seed_str=seed,
         num_cpus=num_cpus,
@@ -736,7 +756,7 @@ def stgp_traffic(
     # test error
     print(f"Best MSE on the test set: ", gpsr.score(X_test))
 
-    best_ind = gpsr.get_best_individual()
+    best_ind = gpsr.get_best_individuals()[0]
     best_consts = best_ind.consts
 
     print("Best constants = ", [f"{f:.20f}" for f in best_consts])
@@ -765,6 +785,7 @@ if __name__ == "__main__":
 
     regressor_params, config_file_data = util.load_config_data(filename)
     road_name = config_file_data["gp"]["road_name"]
+    task = config_file_data["gp"]["task"]
 
     data_info = preprocess_data(road_name)
     X_training, X_test = build_dataset(
@@ -773,21 +794,15 @@ if __name__ == "__main__":
         data_info["density"],
         data_info["v"],
         data_info["flow"],
+        task,
     )
 
-    # seed = ["ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, a)))"]
-    # seed = ["ExpP0(MFP0(conv_3P0(MFP0(SquareP0(rho), a), ones), a))"]
-    # seed = ["ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, 9.96715753)))"]
-    # seed = [
-    #     "SqrtP0(SquareP0(AddCP0(delP1(flat_lin_rightP0(InvMP0(ExpP0(rho), 6.71662528103924216794))), ones)))"
-    # ]
-    # seed = [
-    #     "ExpP0(conv_1P0(delP1(flat_lin_rightP0(MFP0(rho, 3.73196744))), MFP0(rho, 8.53620487)))"
-    # ]
     # seed = [
     #     "AddCP0(ones, conv_1P0(delP1(flat_lin_leftP0(ExpP0(MFP0(SqrtP0(SquareP0(rho)), c)))), ExpP0(MFP0(rho, c))))"
     # ]
-    seed = ["SquareP0(ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, c))))"]
+    seed = [
+        "SquareP0(ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, 5.82940218613048344309))))"
+    ]
     # seed = None
     output_path = "."
 

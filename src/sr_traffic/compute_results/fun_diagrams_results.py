@@ -472,13 +472,6 @@ flats = {
     "flat_left_v": flat_left,
 }
 
-# build the kernel
-d = 3 * data_info["delta_x"]
-n_d = int(d / data_info["delta_x"])
-y_kernel = np.linspace(0.0, d, num=n_d)
-eta = linear_kernel(S, y_kernel, d)
-
-
 if road_name == "US101":
     opt_greenshields = [0.79197062, 0.51105397]
     opt_Weidmann = [0.5893936, 0.54700764, 0.541796]

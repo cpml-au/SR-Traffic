@@ -19,44 +19,6 @@ def constant_sub(k: float, c: C.Cochain) -> C.Cochain:
     return C.Cochain(c.dim, c.is_primal, c.complex, k - c.coeffs)
 
 
-def ones(c: C.Cochain) -> C.Cochain:
-    return C.Cochain(c.dim, c.is_primal, c.complex, c.coeffs**0)
-
-
-def inv(c: C.Cochain) -> C.Cochain:
-    """Compute the cochain subtraction between a constant cochain and another cochain.
-
-    Args:
-        c: a cochain.
-
-    Returns:
-        the resulting subtraction
-    """
-    return C.Cochain(c.dim, c.is_primal, c.complex, 1 / c.coeffs)
-
-
-def pow(c: C.Cochain, k: float) -> C.Cochain:
-    return C.Cochain(c.dim, c.is_primal, c.complex, c.coeffs**k)
-
-
-def constant_array_sub(x: Array, k: float):
-    return k - x
-
-
-def constant_kernel(S, x, d):
-    non_zero_coeffs = 1 / d * jnp.ones_like(x)
-    coch_coeffs = jnp.zeros(S.num_nodes)
-    coch_coeffs = coch_coeffs.at[: len(x)].set(non_zero_coeffs)
-    return C.CochainP0(S, coch_coeffs)
-
-
-def linear_kernel(S, x, d):
-    non_zero_coeffs = 2 * (d - x) / (d**2)
-    coch_coeffs = jnp.zeros(S.num_nodes)
-    coch_coeffs = coch_coeffs.at[: len(x)].set(non_zero_coeffs)
-    return C.CochainP0(S, coch_coeffs)
-
-
 def add_new_primitives(pset):
     # Define the modules and functions needed to eval inputs and outputs
     modules_functions = {"dctkit.dec": ["cochain"]}
@@ -76,37 +38,6 @@ def add_new_primitives(pset):
             "rank": lambda x: x,
         },
     }
-    # invC = {
-    #     "fun_info": {"name": "invC", "fun": inv},
-    #     "input": ["cochain.Cochain"],
-    #     "output": "cochain.Cochain",
-    #     "att_input": {
-    #         "category": ("P", "D"),
-    #         "dimension": ("0", "1", "2"),
-    #         "rank": ("SC",),
-    #     },
-    #     "map_rule": {
-    #         "category": lambda x: x,
-    #         "dimension": lambda x: x,
-    #         "rank": lambda x: x,
-    #     },
-    # }
-    # powC = {
-    #     "fun_info": {"name": "powC", "fun": pow},
-    #     "input": ["cochain.Cochain", "float"],
-    #     "output": "cochain.Cochain",
-    #     "att_input": {
-    #         "category": ("P", "D"),
-    #         "dimension": ("0", "1", "2"),
-    #         "rank": ("SC",),
-    #     },
-    #     "map_rule": {
-    #         "category": lambda x: x,
-    #         "dimension": lambda x: x,
-    #         "rank": lambda x: x,
-    #     },
-    # }
-    # new_primitives = [subFC, invC, powC, onesC]
     new_primitives = [subFC]
     for i in range(1, 4):
         conv_i = {

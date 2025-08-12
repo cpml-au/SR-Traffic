@@ -1,100 +1,10 @@
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 import numpy as np
 from jax import vmap
 from dctkit.dec import cochain as C
-from dctkit.dec.flat import flat
-from dctkit.mesh import util
 import os
 import jax.numpy as jnp
 import matplotlib.colors as mcolors
-
-# from traffic_flow.utils import flat as tf_flat
-# from traffic_flow.stgp_traffic import compile_individual_with_consts
-# from functools import partial
-# import traffic_flow.utils.fund_diagrams as fnd_diag
-# from deap import gp
-
-
-def plot_velocity_flux_density(t, length, mean_velocity, flux, density):
-    fontsize = 10
-    plt.rc("font", size=fontsize)
-    plt.figure(1, figsize=(25, 5))
-    _, axes = plt.subplots(1, 3, num=1)
-
-    vel_plot = axes[0].contourf(
-        t,
-        length,
-        mean_velocity,
-        levels=100,
-        vmin=np.min(mean_velocity),
-        vmax=np.max(mean_velocity),
-        cmap="rainbow",
-    )
-    flux_plot = axes[1].contourf(
-        t,
-        length,
-        flux,
-        levels=100,
-        vmin=np.min(flux),
-        vmax=np.max(flux),
-        cmap="rainbow",
-    )
-    density_plot = axes[2].contourf(
-        t,
-        length,
-        density,
-        levels=100,
-        vmin=np.min(density),
-        vmax=np.max(density),
-        cmap="rainbow",
-    )
-    # Define rectangle parameters (x, y, width, height)
-    rect_0 = patches.Rectangle(
-        (0, 0),
-        0.6,
-        np.max(length),
-        linewidth=2,
-        edgecolor="red",
-        facecolor="none",
-        clip_on=False,
-    )
-    rect_1 = patches.Rectangle(
-        (0, 0),
-        0.6,
-        np.max(length),
-        linewidth=2,
-        edgecolor="red",
-        facecolor="none",
-        clip_on=False,
-    )
-    rect_2 = patches.Rectangle(
-        (0, 0),
-        0.6,
-        np.max(length),
-        linewidth=2,
-        edgecolor="red",
-        facecolor="none",
-        clip_on=False,
-    )
-
-    # Add rectangle to plot
-    axes[0].add_patch(rect_0)
-    axes[1].add_patch(rect_1)
-    axes[2].add_patch(rect_2)
-
-    plt.colorbar(vel_plot, ax=axes[0])
-    plt.colorbar(flux_plot, ax=axes[1])
-    plt.colorbar(density_plot, ax=axes[2])
-    axes[0].set_title("velocity")
-    axes[1].set_title("flow")
-    axes[2].set_title("density")
-    for i in range(3):
-        axes[i].set_xlabel("$t$")
-        axes[i].set_ylabel("$x$")
-        axes[i].set_xlim(np.min(t), np.max(t))
-        axes[i].set_ylim(np.min(length), np.max(length))
-    plt.savefig("data_plot.png", dpi=300, bbox_inches="tight")
 
 
 def stgp_traffic_plots(
@@ -253,11 +163,6 @@ def stgp_traffic_plots(
     )
     plt.colorbar(f_plot, ax=axes[2, 1], label=r"$f$")
     plt.colorbar(f_plot, ax=axes[2, 0], label=r"$f$")
-
-    np.save("sr_densityP0.npy", rho_computed)
-    np.save("sr_density.npy", rho_comp)
-    np.save("sr_velocity.npy", v_comp)
-    np.save("sr_flux.npy", f_comp)
 
     for i in range(3):
         axes[i, 0].set_xlabel(r"t")
