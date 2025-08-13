@@ -1,6 +1,5 @@
 import jax.numpy as jnp
 import dctkit.dec.cochain as C
-import numpy.typing as npt
 from jax import vmap, grad, lax, jacfwd
 from functools import partial
 
@@ -43,12 +42,6 @@ def Weidmann_flux(rho, v_max, rho_max, lambda_w):
         rho.complex,
         rho.coeffs * Weidmann_v(rho.coeffs, v_max, rho_max, lambda_w),
     )
-
-
-def Greenshields_non_local_flux(rho, v_max, rho_max, eta, eta_window):
-    conv = C.convolution(rho, eta, eta_window)
-    f_0_conv = v_max * rho.coeffs * (1 - conv.coeffs / rho_max)
-    return C.Cochain(rho.dim, rho.is_primal, rho.complex, f_0_conv)
 
 
 def triangular_flux(rho, V_0, l_eff, T):
@@ -154,12 +147,6 @@ def define_flux_der(S, flux):
         return C.CochainP0(rho.complex, jnp.diag(der(rho.coeffs.flatten(), *args)))
 
     return der_auto
-
-
-# def extended_triangular(rho, u_max, rho_max, rho_c):
-#     v_e = u_max * (1 - rho.coeffs / rho_max)
-#     Q_c = rho_c * u_max * (1 - rho_c / rho_max)
-#     w = Q_c / (rho_max - rho_c)
 
 
 if __name__ == "__main__":
