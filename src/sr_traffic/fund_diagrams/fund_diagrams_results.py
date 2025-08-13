@@ -4,10 +4,9 @@ from jax import vmap
 from dctkit.dec import cochain as C
 from dctkit.dec.flat import flat
 from sr_traffic.data.data import preprocess_data, build_dataset
-from sr_traffic.compute_results.plots import plot_velocity_flux_density
-from sr_traffic.utils import fund_diagrams as tf_utils
+from sr_traffic.fund_diagrams import fund_diagrams_def as tf_utils
 from sr_traffic.utils import flat as tf_flat
-from sr_traffic.utils.primitives import *
+from sr_traffic.learning.primitives import *
 from sr_traffic.utils.godunov import godunov_solver
 from functools import partial
 import matplotlib.pyplot as plt
@@ -432,12 +431,6 @@ X_training, X_test = build_dataset(
 # plot data
 x_sampled_circ = (data_info["x_sampled"][1:] + data_info["x_sampled"][:-1]) / 2
 x_mesh, t_mesh = np.meshgrid(x_sampled_circ, data_info["t_sampled_circ"])
-
-plot_velocity_flux_density(
-    t_mesh, x_mesh, data_info["v"].T, data_info["flow"].T, data_info["density"].T
-)
-plt.clf()
-
 S = data_info["S"]
 
 # define flat

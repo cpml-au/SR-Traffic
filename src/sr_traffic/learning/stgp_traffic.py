@@ -1,14 +1,13 @@
 from dctkit import config as config
 from dctkit.dec import cochain as C
 from dctkit.mesh.simplex import SimplicialComplex
-from typing import Tuple, Callable, Dict, List
+from typing import Tuple, Callable, Dict
 import numpy.typing as npt
 from jax import jit, vmap, jacfwd
 import jax.numpy as jnp
 from functools import partial
 import sr_traffic.utils.flat as tf_flat
-import sr_traffic.utils.fund_diagrams as fnd_diag
-from sr_traffic.utils.primitives import add_new_primitives
+from sr_traffic.learning.primitives import add_new_primitives
 from sr_traffic.utils.godunov import body_fun, main_loop
 from sr_traffic.data.data import preprocess_data, build_dataset
 from flex.gp import util, primitives
@@ -17,11 +16,10 @@ from deap import gp
 from deap.base import Toolbox
 import warnings
 import pygmo as pg
-from sr_traffic.compute_results import plots
+from sr_traffic.learning.utils import *
 import os
 import time
 import gc
-import importlib
 
 warnings.filterwarnings("ignore")
 
@@ -45,49 +43,6 @@ class fitting_problem:
 
     def get_bounds(self):
         return (-10.0 * jnp.ones(self.n_constants), 10.0 * jnp.ones(self.n_constants))
-
-
-# Helper to resolve function from string
-def resolve_function(full_name):
-    module = importlib.import_module("traffic_flow.utils.fund_diagrams")
-    return getattr(module, full_name)
-
-
-def detect_nested_functions(equation):
-    # FIXME: move this
-    # List of trigonometric functions
-    conv_functions = ["conv"]
-    nested = 0  # Flag to indicate if nested functions are found
-    function_depth = 0  # Track depth within trigonometric function calls
-    i = 0
-
-    while i < len(equation) and not nested:
-        # Look for trigonometric function
-        trig_found = any(
-            equation[i : i + len(trig)].lower() == trig for trig in conv_functions
-        )
-        if trig_found:
-            # If a trig function is found, look for its opening parenthesis
-            j = i
-            while j < len(equation) and equation[j] not in ["(", " "]:
-                j += 1
-            if j < len(equation) and equation[j] == "(":
-                if function_depth > 0:
-                    # We are already inside a trig function, this is a nested trig
-                    # function
-                    nested = 1
-                function_depth += 1
-                i = j  # Move i to the position of '('
-        elif equation[i] == "(" and function_depth > 0:
-            # Increase depth if we're already in a trig function
-            function_depth += 1
-        elif equation[i] == ")":
-            if function_depth > 0:
-                # Leaving a trigonometric function or nested parentheses
-                function_depth -= 1
-        i += 1
-
-    return nested
 
 
 def flux_wrap(x: C.CochainP0, func: Callable, S: SimplicialComplex) -> C.CochainP0:
@@ -762,7 +717,7 @@ def stgp_traffic(
     print("Best constants = ", [f"{f:.20f}" for f in best_consts])
 
     # PLOTS
-    test_errors = plots.stgp_traffic_plots(
+    test_errors = stgp_traffic_plots(
         gpsr,
         S,
         flats,

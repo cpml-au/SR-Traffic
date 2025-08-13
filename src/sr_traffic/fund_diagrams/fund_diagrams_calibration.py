@@ -1,16 +1,15 @@
 from dctkit.dec import cochain as C
 from sr_traffic.data.data import preprocess_data, build_dataset
-import sr_traffic.utils.fund_diagrams as tf_utils
-from sr_traffic.stgp_traffic import body_fun
+import sr_traffic.fund_diagrams.fund_diagrams_def as tf_utils
+from sr_traffic.utils.godunov import godunov_solver
 import jax.numpy as jnp
-from jax import lax, vmap
+from jax import vmap
 import pygmo as pg
 import time
 from functools import partial
 import sr_traffic.utils.flat as tf_flat
 from dctkit.dec.flat import flat
 from jax import jit
-from sr_traffic.utils.primitives import *
 from dctkit import config
 
 config()
@@ -60,33 +59,17 @@ class Calibration:
     def error(self, flux_cal_params, num_t_points):
         flux = lambda x: self.flux(x, *flux_cal_params)
         flux_der = lambda x: self.flux_der(x, *flux_cal_params)
-        f0 = partial(
-            body_fun,
-            self.S,
+        rho_computed, v_computed, f_computed = godunov_solver(
+            self.rho_god[:, 0],
+            S,
             self.rho_god,
             flux,
             flux_der,
             self.delta_t_refined,
             0.0,
-            self.flats,
+            flats,
+            num_t_points,
         )
-
-        _, rho_v_f = lax.scan(
-            f0, (self.rho_god[:, 0].reshape(-1, 1), False), jnp.arange(num_t_points - 1)
-        )
-        rho_1_T = rho_v_f[0][:, :, 0]
-        v_1_T = rho_v_f[1][:, :, 0]
-        f_1_T = rho_v_f[2][:, :, 0]
-
-        # first interpolate rho_0, then compute velocity
-        rho_0_P0 = C.star(flats["linear_left"](C.CochainD0(S, self.rho_god[:, 0])))
-        f_0 = flux(rho_0_P0).coeffs
-        v_0 = f_0 / rho_0_P0.coeffs
-
-        # insert initial values of v and f
-        rho_computed = jnp.vstack([self.rho_god[:, 0], rho_1_T]).T
-        v_computed = jnp.vstack([v_0[:-1].flatten(), v_1_T]).T
-        f_computed = jnp.vstack([f_0[:-1].flatten(), f_1_T]).T
 
         rho_error = relative_squared_error(
             rho_computed, self.rho, self.train_idx, self.step, self.task
