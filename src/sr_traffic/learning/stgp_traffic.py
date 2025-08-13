@@ -755,10 +755,8 @@ if __name__ == "__main__":
     # seed = [
     #     "AddCP0(ones, conv_1P0(delP1(flat_lin_leftP0(ExpP0(MFP0(SqrtP0(SquareP0(rho)), c)))), ExpP0(MFP0(rho, c))))"
     # ]
-    seed = [
-        "SquareP0(ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, 5.82940218613048344309))))"
-    ]
-    # seed = None
+    # seed = ["SquareP0(ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, c))))"]
+    seed = None
     output_path = "."
 
     dt = data_info["delta_t_refined"]
