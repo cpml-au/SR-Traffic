@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 from dctkit.mesh.simplex import SimplicialComplex
 from dctkit.dec import cochain as C
 from dctkit.dec.flat import flat
-import traffic_flow.utils.flat as tf_flat
+import sr_traffic.utils.flat as tf_flat
 from functools import partial
 from jax import vmap
 import math

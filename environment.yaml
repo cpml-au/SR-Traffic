@@ -1,11 +1,27 @@
-name: SR-Traffic
+name: sr_traffic
 channels:
+  - conda-forge
   - defaults
 dependencies:
-  - python=3.8
+  - python==3.12
   - pip
+  - gmsh
+  - yaml
+  - numpy
+  - pygmo
+  - scipy
+  - scikit-learn
+  - typeguard
+  - matplotlib
   - pip:
+      - git+https://github.com/cpml-au/flex
+      - git+https://github.com/cpml-au/dctkit
+      - git+https://github.com/cpml-au/deap
       - pre-commit
       - pytest
       - black
       - flake8
+      - pygmsh
+      - jax[cpu]
+      - ray
+      - sympy
