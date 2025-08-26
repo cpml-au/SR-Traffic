@@ -97,7 +97,9 @@ def simulate_model(flux_fn, flux_der_fn, data_info, S, flats, step, rho_bnd_arra
     return rho, rho_computedP0, v_comp, f_comp
 
 
-def plot_diagrams(results, rhoP0, v, f, name_diagram, test_name, train_idx, test_idx):
+def plot_diagrams(
+    results, rhoP0, v, f, name_diagram, test_name, train_idx, test_idx, task
+):
 
     if name_diagram == "velocity":
         diagram = v
@@ -105,10 +107,16 @@ def plot_diagrams(results, rhoP0, v, f, name_diagram, test_name, train_idx, test
     elif name_diagram == "flux":
         diagram = f
         diagram_idx = "f"
+    if task == "prediction":
+        train_idx_slice = (slice(None), train_idx)
+        test_idx_slice = (slice(None), test_idx)
+    elif task == "reconstruction":
+        train_idx_slice = (train_idx, slice(None))
+        test_idx_slice = (test_idx, slice(None))
     models_names = list(results.keys())
     num_models = len(models_names)
 
-    fig_dim = (3 * num_models, num_models - 1.2)
+    fig_dim = (3 * num_models, num_models - 2.2)
     fig, axes = plt.subplots(1, num_models, figsize=fig_dim)
     for i in range(num_models):
         name = models_names[i]
@@ -122,8 +130,8 @@ def plot_diagrams(results, rhoP0, v, f, name_diagram, test_name, train_idx, test
             zorder=1,
         )
         axes[i].scatter(
-            rhoP0[:, train_idx].flatten(),
-            diagram[:, train_idx].flatten(),
+            rhoP0[train_idx_slice].flatten(),
+            diagram[train_idx_slice].flatten(),
             marker=".",
             s=5,
             label="Training Data",
@@ -131,8 +139,8 @@ def plot_diagrams(results, rhoP0, v, f, name_diagram, test_name, train_idx, test
             zorder=0,
         )
         axes[i].scatter(
-            rhoP0[:, test_idx].flatten(),
-            diagram[:, test_idx].flatten(),
+            rhoP0[test_idx_slice].flatten(),
+            diagram[test_idx_slice].flatten(),
             marker=".",
             s=5,
             label="Test Data",
@@ -141,6 +149,8 @@ def plot_diagrams(results, rhoP0, v, f, name_diagram, test_name, train_idx, test
         )
         axes[i].set_xlabel(r"$\rho$ (veh/ft)")
         axes[i].set_ylabel(r"$\rho\,V(\rho)$ (veh/s)")
+        # axes[i].set_xticks([0, 0.1, 0.2])
+        axes[i].set_yticks([0, 1, 2, 3])
         # axes[i].legend()
         axes[i].set_title(name)
 
@@ -148,10 +158,12 @@ def plot_diagrams(results, rhoP0, v, f, name_diagram, test_name, train_idx, test
     fig.legend(
         handles,
         labels,
-        bbox_to_anchor=(0.65, 1.1),
+        bbox_to_anchor=(0.68, 1.15),
         ncol=3,
         fancybox=True,
         shadow=True,
+        fontsize=15,
+        markerscale=3,
     )
     plt.tight_layout()
     plt.savefig(f"{name_diagram}_{test_name}.png", dpi=300, bbox_inches="tight")
@@ -416,7 +428,7 @@ def fill_error_table(results, train_idx, test_idx, task):
 
 
 road_name = "US80"
-task = "reconstruction"
+task = "prediction"
 test_name = f"i80_{task}"
 data_info = preprocess_data(road_name)
 X_training, X_test = build_dataset(
@@ -616,12 +628,14 @@ plt.rcParams["font.size"] = fontsize
 plt.rcParams["font.sans-serif"] = "Dejavu Sans"
 plt.rcParams["font.family"] = "sans-serif"
 
-plot_diagrams(results, rhoP0, v, f, "flux", test_name, train_idx, test_idx)
-plot_diagrams(results, rhoP0, v, f, "velocity", test_name, train_idx, test_idx)
+plot_diagrams(results, rhoP0, v, f, "flux", test_name, train_idx, test_idx, task)
+plot_diagrams(results, rhoP0, v, f, "velocity", test_name, train_idx, test_idx, task)
 
-plot_diagrams(sr_results, rhoP0, v, f, "flux", test_name + "_sr", train_idx, test_idx)
 plot_diagrams(
-    sr_results, rhoP0, v, f, "velocity", test_name + "_sr", train_idx, test_idx
+    sr_results, rhoP0, v, f, "flux", test_name + "_sr", train_idx, test_idx, task
+)
+plot_diagrams(
+    sr_results, rhoP0, v, f, "velocity", test_name + "_sr", train_idx, test_idx, task
 )
 
 rho_v_plot(results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks, task)
