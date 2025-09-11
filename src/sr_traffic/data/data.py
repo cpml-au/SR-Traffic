@@ -200,18 +200,35 @@ def build_dataset(
             random_state=42,
             shuffle=False,
         )
-        t_tr_idx, t_test_idx, _, _ = tr_test_tuple
+        t_tr_val_idx, t_test_idx, _, _ = tr_test_tuple
+        tr_val_tuple = train_test_split(
+            t_tr_val_idx,
+            velocity_data[:, t_tr_val_idx].T,
+            test_size=0.4,
+            random_state=42,
+            shuffle=False,
+        )
+        t_tr_idx, t_val_idx, _, _ = tr_val_tuple
         x_idx = np.arange(1, density.shape[0] - 3)
 
         _, ax_tr = np.meshgrid(x_idx, t_tr_idx)
+        _, ax_val = np.meshgrid(x_idx, t_val_idx)
+        _, ax_tr_val = np.meshgrid(x_idx, t_tr_val_idx)
         _, ax_test = np.meshgrid(x_idx, t_test_idx)
+
         rho_tr = density[1:-3, t_tr_idx].ravel("F")
+        rho_val = density[1:-3, t_val_idx].ravel("F")
+        rho_tr_val = density[1:-3, t_tr_val_idx].ravel("F")
         rho_test = density[1:-3, t_test_idx].ravel("F")
 
         v_tr = velocity_data[1:-3, t_tr_idx].ravel("F")
+        v_val = velocity_data[1:-3, t_val_idx].ravel("F")
+        v_tr_val = velocity_data[1:-3, t_tr_val_idx].ravel("F")
         v_test = velocity_data[1:-3, t_test_idx].ravel("F")
 
         f_tr = flow_data[1:-3, t_tr_idx].ravel("F")
+        f_val = flow_data[1:-3, t_val_idx].ravel("F")
+        f_tr_val = flow_data[1:-3, t_tr_val_idx].ravel("F")
         f_test = flow_data[1:-3, t_test_idx].ravel("F")
     elif task == "reconstruction":
         # space splitting (reconstruction)
@@ -224,26 +241,28 @@ def build_dataset(
             random_state=42,
             shuffle=True,
         )
-        x_tr_idx, x_test_idx, _, _ = tr_test_tuple
+        x_tr_val_idx, x_test_idx, _, _ = tr_test_tuple
         # reorder indices
-        x_tr_idx = np.sort(x_tr_idx)
+        x_tr_val_idx = np.sort(x_tr_val_idx)
         x_test_idx = np.sort(x_test_idx)
         t_idx = np.arange(num_t_points)
 
-        ax_tr, _ = np.meshgrid(x_tr_idx, t_idx)
+        ax_tr_val, _ = np.meshgrid(x_tr_val_idx, t_idx)
         ax_test, _ = np.meshgrid(x_test_idx, t_idx)
 
-        rho_tr = density[1:-3, :][x_tr_idx, :].ravel("F")
+        rho_tr_val = density[1:-3, :][x_tr_val_idx, :].ravel("F")
         rho_test = density[1:-3, :][x_test_idx, :].ravel("F")
 
-        v_tr = velocity_data[1:-3, :][x_tr_idx, :].ravel("F")
+        v_tr_val = velocity_data[1:-3, :][x_tr_val_idx, :].ravel("F")
         v_test = velocity_data[1:-3, :][x_test_idx, :].ravel("F")
 
-        f_tr = flow_data[1:-3, :][x_tr_idx, :].ravel("F")
+        f_tr_val = flow_data[1:-3, :][x_tr_val_idx, :].ravel("F")
         f_test = flow_data[1:-3, :][x_test_idx, :].ravel("F")
 
     # build X
     X_tr = np.column_stack((ax_tr.ravel(), rho_tr, v_tr, f_tr))
+    X_val = np.column_stack((ax_val.ravel(), rho_val, v_val, f_val))
+    X_tr_val = np.column_stack((ax_tr_val.ravel(), rho_tr_val, v_tr_val, f_tr_val))
     X_test = np.column_stack((ax_test.ravel(), rho_test, v_test, f_test))
 
-    return X_tr, X_test
+    return X_tr, X_val, X_tr_val, X_test

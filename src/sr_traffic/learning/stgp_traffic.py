@@ -679,6 +679,8 @@ def stgp_traffic(
     v,
     f,
     X_training,
+    X_validation,
+    X_train_val,
     X_test,
     S,
     delta_x,
@@ -705,33 +707,36 @@ def stgp_traffic(
         seed,
         output_path,
     )
+    validate = config_file_data["gp"]["validate"]
     start = time.perf_counter()
-    gpsr.fit(X_training)
+    if validate:
+        gpsr.fit(X_training, None, X_validation, None)
+    else:
+        gpsr.fit(X_train_val)
 
-    # test error
-    print(f"Best MSE on the test set: ", gpsr.score(X_test))
+        # PLOTS
+        stgp_traffic_plots(
+            gpsr,
+            S,
+            flats,
+            X_test,
+            density,
+            v,
+            f,
+            t_sampled_circ,
+            step,
+            output_path,
+        )
+
+        # test error
+        print(f"Best MSE on the test set: ", gpsr.score(X_test))
 
     best_ind = gpsr.get_best_individuals()[0]
     best_consts = best_ind.consts
 
     print("Best constants = ", [f"{f:.20f}" for f in best_consts])
 
-    # PLOTS
-    test_errors = stgp_traffic_plots(
-        gpsr,
-        S,
-        flats,
-        X_test,
-        density,
-        v,
-        f,
-        t_sampled_circ,
-        step,
-        output_path,
-    )
-
     print(f"Elapsed time: {round(time.perf_counter() - start, 2)}")
-    return test_errors
 
 
 if __name__ == "__main__":
@@ -743,7 +748,7 @@ if __name__ == "__main__":
     task = config_file_data["gp"]["task"]
 
     data_info = preprocess_data(road_name)
-    X_training, X_test = build_dataset(
+    X_tr, X_val, X_tr_val, X_test = build_dataset(
         data_info["t_sampled_circ"],
         data_info["S"],
         data_info["density"],
@@ -767,7 +772,9 @@ if __name__ == "__main__":
         data_info["density"],
         data_info["vP0"][:-1],
         data_info["fP0"][:-1],
-        X_training,
+        X_tr,
+        X_val,
+        X_tr_val,
         X_test,
         data_info["S"],
         data_info["delta_x"],
