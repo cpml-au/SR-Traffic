@@ -258,10 +258,25 @@ def build_dataset(
 
         f_tr_val = flow_data[1:-3, :][x_tr_val_idx, :].ravel("F")
         f_test = flow_data[1:-3, :][x_test_idx, :].ravel("F")
+        # no explicit tr/val split here
+        ax_tr, rho_tr, v_tr, f_tr = ax_val, rho_val, v_val, f_val = (
+            np.array([]),
+            np.array([]),
+            np.array([]),
+            np.array([]),
+        )
 
     # build X
-    X_tr = np.column_stack((ax_tr.ravel(), rho_tr, v_tr, f_tr))
-    X_val = np.column_stack((ax_val.ravel(), rho_val, v_val, f_val))
+    X_tr = (
+        np.column_stack((ax_tr.ravel(), rho_tr, v_tr, f_tr))
+        if ax_tr.size
+        else np.empty((0, 4))
+    )
+    X_val = (
+        np.column_stack((ax_val.ravel(), rho_val, v_val, f_val))
+        if ax_val.size
+        else np.empty((0, 4))
+    )
     X_tr_val = np.column_stack((ax_tr_val.ravel(), rho_tr_val, v_tr_val, f_tr_val))
     X_test = np.column_stack((ax_test.ravel(), rho_test, v_test, f_test))
 

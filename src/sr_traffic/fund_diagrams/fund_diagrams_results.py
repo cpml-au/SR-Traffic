@@ -116,7 +116,7 @@ def plot_diagrams(
     models_names = list(results.keys())
     num_models = len(models_names)
 
-    fig_dim = (3 * num_models, num_models - 2.2)
+    fig_dim = (3 * num_models, num_models - 1.2)
     fig, axes = plt.subplots(1, num_models, figsize=fig_dim)
     for i in range(num_models):
         name = models_names[i]
@@ -155,16 +155,16 @@ def plot_diagrams(
         axes[i].set_title(name)
 
     handles, labels = axes[i].get_legend_handles_labels()
-    fig.legend(
-        handles,
-        labels,
-        bbox_to_anchor=(0.68, 1.15),
-        ncol=3,
-        fancybox=True,
-        shadow=True,
-        fontsize=15,
-        markerscale=3,
-    )
+    # fig.legend(
+    #     handles,
+    #     labels,
+    #     bbox_to_anchor=(0.68, 1.15),
+    #     ncol=3,
+    #     fancybox=True,
+    #     shadow=True,
+    #     fontsize=15,
+    #     markerscale=3,
+    # )
     plt.tight_layout()
     plt.savefig(f"{name_diagram}_{test_name}.png", dpi=300, bbox_inches="tight")
     plt.clf()
@@ -198,6 +198,7 @@ def rho_v_plot(
 
     cmap = "rainbow"
     cb_ticks = [[0, 0.1, 0.2], [1, 40, 75]]
+    cb_ticks = [[0, 0.1, 0.2], [1, 30, 65]]
 
     if task == "prediction":
         rect_0_train = make_rect((2.5, 10), 535.0, 1500.0, "red")
@@ -427,11 +428,11 @@ def fill_error_table(results, train_idx, test_idx, task):
     print(table)
 
 
-road_name = "US80"
+road_name = "US101"
 task = "prediction"
-test_name = f"i80_{task}"
+test_name = f"us101_{task}"
 data_info = preprocess_data(road_name)
-X_training, X_test = build_dataset(
+_, _, X_training, X_test = build_dataset(
     data_info["t_sampled_circ"],
     data_info["S"],
     data_info["density"],
@@ -478,17 +479,18 @@ flats = {
 }
 
 if road_name == "US101":
-    opt_greenshields = [0.79197062, 0.51105397]
-    opt_Weidmann = [0.5893936, 0.54700764, 0.541796]
-    opt_triangular = [0.42595455, 1.40987626, 7.19902727]
-    opt_idm = [0.13046561, 0.68253887, 0.05752636, 0.49775953]
-    opt_del_castillo = [0.21205058, 0.55683342, 0.82425097, 6.70846888]
+    if task == "prediction":
+        opt_greenshields = [0.79197062, 0.51105397]
+        opt_Weidmann = [0.5893936, 0.54700764, 0.541796]
+        opt_triangular = [0.42595455, 1.40987626, 7.19902727]
+        opt_idm = [0.13046561, 0.68253887, 0.05752636, 0.49775953]
+        opt_del_castillo = [0.21205058, 0.55683342, 0.82425097, 6.70846888]
 
-    sr_greens_params = [1.06722615490511074654, 0.96463871990166261128]
-    sr_Weidmann_params = [1.83887498367116108966, 1.33264073296325769036]
-    sr_triangular_params = [3.59013933560497733311, -0.26024859915084519457]
-    sr_idm_params = [2.26415104806225109257, 1.20329683345590154886]
-    sr_del_castillo_params = [2.58099743784204349595, -0.07370838785888800260]
+        sr_greens_params = [1.06722615490511074654, 0.96463871990166261128]
+        sr_Weidmann_params = [1.83887498367116108966, 1.33264073296325769036]
+        sr_triangular_params = [3.59013933560497733311, -0.26024859915084519457]
+        sr_idm_params = [2.26415104806225109257, 1.20329683345590154886]
+        sr_del_castillo_params = [2.58099743784204349595, -0.07370838785888800260]
 
     x_ticks = [0, 675, 1350, 2025, 2700]
     y_ticks = [50, 505, 1010, 1515, 2070]
@@ -509,6 +511,7 @@ elif road_name == "US80":
         opt_greenshields = [0.67221695, 0.53916011]
         opt_Weidmann = [0.58670242, 0.71605332, 0.32424757]
         opt_triangular = [0.37468432, 1.28975743, 7.48885539]
+        opt_idm = [0.19443457, 0.46117864, 0.17488129, 0.28658202]
         sr_greens_params = [5.83882956394043795001]
         sr_Weidmann_params = [5.82940218613048344309]
         sr_triangular_params = [9.39984985913767445709]
@@ -548,10 +551,10 @@ flux_del_castillo_der = lambda x: del_castillo_flux_der(x, *opt_del_castillo)
 step = data_info["step"]
 models = {
     "Greenshields": (flux_greens, flux_greens_der, sr_greens_params),
-    # "IDM": (flux_idm, flux_idm_der, sr_idm_params),
+    "IDM": (flux_idm, flux_idm_der, sr_idm_params),
     "Weidmann": (flux_weidmann, flux_weidmann_der, sr_Weidmann_params),
     "Triangular": (flux_triang, flux_triang_der, sr_triangular_params),
-    # "Del Castillo": (flux_del_castillo, flux_del_castillo_der, sr_del_castillo_params),
+    "Del Castillo": (flux_del_castillo, flux_del_castillo_der, sr_del_castillo_params),
 }
 
 # define sr models
@@ -563,7 +566,7 @@ for name, (flux_fn, _, params) in models.items():
     sr_models[sr_name] = (sr_flux, sr_flux_der, params)
 
 
-models = models | sr_models
+# models = models | sr_models
 # solve LWR model for all the fundamental diagrams
 results = {}
 for name, (flux_fn, flux_der_fn, _) in models.items():
@@ -650,5 +653,6 @@ predicted_true_plots(sr_results, v, f, test_name + "_sr")
 
 
 # Table computation
+results = results | sr_results
 fill_error_table(results, train_idx, test_idx, task)
-# fill_error_table(sr_results)
+# fill_error_table(sr_results, train_idx, test_idx, task)

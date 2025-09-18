@@ -90,20 +90,21 @@ class Calibration:
         if jnp.isnan(total_error) or total_error >= 1e3:
             total_error = 1e3
 
+        print(total_error, flux_cal_params)
         return [total_error]
 
     def get_bounds(self):
         # return ([0.1, 0.0, 0.0], [1.0, 1.3, 10.0])
-        return ([0.0, 0.0, 0.0], [0.7, 5.0, 10.0])
+        # return ([0.0, 0.0, 0.0], [0.7, 5.0, 10.0])
         # return ([0.0, 0], [1, 1.3])
-        # return ([0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0])
+        return ([0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0])
         # return ([0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 10.0])
 
 
 if __name__ == "__main__":
-    task = "prediction"
+    task = "reconstruction"
     data_info = preprocess_data("US80")
-    X_training, X_test = build_dataset(
+    _, _, X_training, X_test = build_dataset(
         data_info["t_sampled_circ"],
         data_info["S"],
         data_info["density"],
@@ -155,7 +156,7 @@ if __name__ == "__main__":
         "linear_left_v": flat_left,
     }
 
-    flux = tf_utils.triangular_flux
+    flux = tf_utils.IDM_flux
     flux_der = tf_utils.define_flux_der(S, flux)
 
     if task == "prediction":
@@ -187,7 +188,7 @@ if __name__ == "__main__":
     tic = time.time()
     prob = pg.problem(calib)
     algo.set_verbosity(1)
-    pop = pg.population(prob, size=1000)
+    pop = pg.population(prob, size=100)
     pop = algo.evolve(pop)
     toc = time.time()
     print(f"Done in {toc-tic} s!")
