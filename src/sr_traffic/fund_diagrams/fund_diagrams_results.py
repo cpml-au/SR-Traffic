@@ -184,7 +184,7 @@ def make_rect(xy, width, height, color):
 
 
 def rho_v_plot(
-    results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks, task
+    results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks, cb_ticks, task
 ):
     models_names = list(results.keys())
     num_models = len(models_names)
@@ -197,14 +197,12 @@ def rho_v_plot(
     x_mesh, t_mesh = np.meshgrid(x_sampled_circ[:-3], data_info["t_sampled_circ"])
 
     cmap = "rainbow"
-    cb_ticks = [[0, 0.1, 0.2], [1, 40, 75]]
-    cb_ticks = [[0, 0.1, 0.2], [1, 30, 65]]
 
     if task == "prediction":
-        rect_0_train = make_rect((2.5, 10), 535.0, 1500.0, "red")
-        rect_1_train = make_rect((2.5, 10), 535.0, 1500.0, "red")
-        rect_0_test = make_rect((542.5, 10), 355, 1500.0, "#FF7F50")
-        rect_1_test = make_rect((542.5, 10), 355, 1500.0, "#FF7F50")
+        rect_0_train = make_rect((2.5, 10), 1615, 1960, "red")
+        rect_1_train = make_rect((2.5, 10), 1615, 1960, "red")
+        rect_0_test = make_rect((1622.5, 10), 1075, 1960, "#FF7F50")
+        rect_1_test = make_rect((1622.5, 10), 1075, 1960, "#FF7F50")
 
         rect_train = [rect_0_train, rect_1_train]
         rect_test = [rect_0_test, rect_1_test]
@@ -492,8 +490,10 @@ if road_name == "US101":
         sr_idm_params = [2.26415104806225109257, 1.20329683345590154886]
         sr_del_castillo_params = [2.58099743784204349595, -0.07370838785888800260]
 
-    x_ticks = [0, 675, 1350, 2025, 2700]
-    y_ticks = [50, 505, 1010, 1515, 2070]
+        cb_ticks = [[0, 0.1, 0.2], [2, 36, 70]]
+
+    x_ticks = [0, 1350, 2700]
+    y_ticks = [10, 990, 1970]
 elif road_name == "US80":
     if task == "prediction":
         opt_greenshields = [0.54673127, 0.55995123]
@@ -507,6 +507,8 @@ elif road_name == "US80":
         sr_idm_params = [2.56095629955760983876, -0.66842648814023597481]
         sr_del_castillo_params = [2.17247255542438466591, -0.09043064382541565749]
 
+        cb_ticks = [[0, 0.1, 0.2], [1, 40, 75]]
+
     elif task == "reconstruction":
         opt_greenshields = [0.67221695, 0.53916011]
         opt_Weidmann = [0.58670242, 0.71605332, 0.32424757]
@@ -516,6 +518,7 @@ elif road_name == "US80":
         sr_Weidmann_params = [5.82940218613048344309]
         sr_triangular_params = [9.39984985913767445709]
 
+        cb_ticks = [[0, 0.1, 0.2], [1, 30, 65]]
     x_ticks = [0, 450, 900]
     y_ticks = [10, 760, 1510]
 
@@ -641,9 +644,19 @@ plot_diagrams(
     sr_results, rhoP0, v, f, "velocity", test_name + "_sr", train_idx, test_idx, task
 )
 
-rho_v_plot(results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks, task)
 rho_v_plot(
-    sr_results, data_info, v, x_sampled_circ, test_name + "_sr", x_ticks, y_ticks, task
+    results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks, cb_ticks, task
+)
+rho_v_plot(
+    sr_results,
+    data_info,
+    v,
+    x_sampled_circ,
+    test_name + "_sr",
+    x_ticks,
+    y_ticks,
+    cb_ticks,
+    task,
 )
 
 
