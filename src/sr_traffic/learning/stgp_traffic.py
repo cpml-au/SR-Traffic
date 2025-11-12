@@ -345,6 +345,7 @@ def eval_MSE_and_tune_constants(
 
         # check feasibility of the solution
         v_unf = v_check_fn(ind_consts, rho_test, S, ansatz["v"], ansatz["opt_coeffs"])
+        print(v_unf, x)
         if v_unf:
             return threshold
 
@@ -760,8 +761,8 @@ if __name__ == "__main__":
     # seed = [
     #     "AddCP0(ones, conv_1P0(delP1(flat_lin_leftP0(ExpP0(MFP0(SqrtP0(SquareP0(rho)), c)))), ExpP0(MFP0(rho, c))))"
     # ]
-    # seed = ["SquareP0(ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, c))))"]
-    seed = None
+    seed = ["SquareP0(ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, c))))"]
+    # seed = None
     output_path = "."
 
     dt = data_info["delta_t_refined"]

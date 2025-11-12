@@ -426,9 +426,9 @@ def fill_error_table(results, train_idx, test_idx, task):
     print(table)
 
 
-road_name = "US101"
-task = "prediction"
-test_name = f"us101_{task}"
+road_name = "US80"
+task = "reconstruction"
+test_name = f"us80_{task}"
 data_info = preprocess_data(road_name)
 _, _, X_training, X_test = build_dataset(
     data_info["t_sampled_circ"],
@@ -492,6 +492,19 @@ if road_name == "US101":
 
         cb_ticks = [[0, 0.1, 0.2], [2, 36, 70]]
 
+    elif task == "reconstruction":
+        opt_greenshields = [0.7639689, 0.53459349]
+        opt_Weidmann = [0.56370847, 0.53356334, 0.541796]
+        opt_triangular = [0.42595455, 1.31832772, 7.19902727]
+        opt_idm = [0.13046561, 0.74381154, 0.05752636, 0.54561196]
+        opt_del_castillo = [0.21205058, 0.50790058, 0.75568294, 6.60932084]
+
+        sr_greens_params = [1.36480748036883703378]
+        sr_Weidmann_params = [1.87594842182742915782]
+        sr_triangular_params = [5.51771616672578701923]
+        sr_idm_params = [4.84447824548921701648]
+        sr_del_castillo_params = [5.28575671688020953809]
+
     x_ticks = [0, 1350, 2700]
     y_ticks = [10, 990, 1970]
 elif road_name == "US80":
@@ -513,10 +526,13 @@ elif road_name == "US80":
         opt_greenshields = [0.67221695, 0.53916011]
         opt_Weidmann = [0.58670242, 0.71605332, 0.32424757]
         opt_triangular = [0.37468432, 1.28975743, 7.48885539]
-        opt_idm = [0.19443457, 0.46117864, 0.17488129, 0.28658202]
+        opt_idm = [0.43936351, 0.95108984, 0.16251414, 0.58307378]
+        opt_del_castillo = [0.28700213, 0.99060242, 0.73049573, 1.7661283]
         sr_greens_params = [5.83882956394043795001]
         sr_Weidmann_params = [5.82940218613048344309]
         sr_triangular_params = [9.39984985913767445709]
+        sr_idm_params = [4.20571147070296014192]
+        sr_del_castillo_params = [5.44501036789935177751]
 
         cb_ticks = [[0, 0.1, 0.2], [1, 30, 65]]
     x_ticks = [0, 450, 900]

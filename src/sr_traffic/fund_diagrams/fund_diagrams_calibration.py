@@ -97,13 +97,13 @@ class Calibration:
         # return ([0.1, 0.0, 0.0], [1.0, 1.3, 10.0])
         # return ([0.0, 0.0, 0.0], [0.7, 5.0, 10.0])
         # return ([0.0, 0], [1, 1.3])
-        return ([0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0])
-        # return ([0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 10.0])
+        # return ([0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0])
+        return ([0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 10.0])
 
 
 if __name__ == "__main__":
     task = "reconstruction"
-    data_info = preprocess_data("US80")
+    data_info = preprocess_data("US101")
     _, _, X_training, X_test = build_dataset(
         data_info["t_sampled_circ"],
         data_info["S"],
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         "linear_left_v": flat_left,
     }
 
-    flux = tf_utils.IDM_flux
+    flux = tf_utils.del_castillo_flux
     flux_der = tf_utils.define_flux_der(S, flux)
 
     if task == "prediction":
@@ -188,7 +188,8 @@ if __name__ == "__main__":
     tic = time.time()
     prob = pg.problem(calib)
     algo.set_verbosity(1)
-    pop = pg.population(prob, size=100)
+    pop = pg.population(prob, size=10)
+    pop.push_back(x=[0.21205058, 0.55683342, 0.82425097, 6.70846888])
     pop = algo.evolve(pop)
     toc = time.time()
     print(f"Done in {toc-tic} s!")
