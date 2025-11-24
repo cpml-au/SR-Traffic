@@ -155,16 +155,16 @@ def plot_diagrams(
         axes[i].set_title(name)
 
     handles, labels = axes[i].get_legend_handles_labels()
-    # fig.legend(
-    #     handles,
-    #     labels,
-    #     bbox_to_anchor=(0.68, 1.15),
-    #     ncol=3,
-    #     fancybox=True,
-    #     shadow=True,
-    #     fontsize=15,
-    #     markerscale=3,
-    # )
+    fig.legend(
+        handles,
+        labels,
+        bbox_to_anchor=(0.68, 1.15),
+        ncol=3,
+        fancybox=True,
+        shadow=True,
+        fontsize=15,
+        markerscale=3,
+    )
     plt.tight_layout()
     plt.savefig(f"{name_diagram}_{test_name}.png", dpi=300, bbox_inches="tight")
     plt.clf()
@@ -184,7 +184,16 @@ def make_rect(xy, width, height, color):
 
 
 def rho_v_plot(
-    results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks, cb_ticks, task
+    results,
+    data_info,
+    v,
+    x_sampled_circ,
+    test_name,
+    x_ticks,
+    y_ticks,
+    cb_ticks,
+    road_name,
+    task,
 ):
     models_names = list(results.keys())
     num_models = len(models_names)
@@ -207,19 +216,53 @@ def rho_v_plot(
         rect_train = [rect_0_train, rect_1_train]
         rect_test = [rect_0_test, rect_1_test]
     elif task == "reconstruction":
-        x_idx = x_sampled_circ[train_idx][:-4]
-        x_idx = [
-            50.0,
-            310.0,
-            430.0,
-            610.0,
-            770.0,
-            1050.0,
-            1210.0,
-            1330.0,
-            1430.0,
-        ]
-        x_magn = [40.0, 20.0, 80, 20, 20, 40, 40, 20, 40]
+        # x_idx = x_sampled_circ[train_idx][:-4]
+        if road_name == "US80":
+            x_idx = [
+                50.0,
+                310.0,
+                430.0,
+                610.0,
+                770.0,
+                1050.0,
+                1210.0,
+                1330.0,
+                1430.0,
+            ]
+            x_magn = [40.0, 20.0, 80.0, 20.0, 20.0, 40.0, 40.0, 20.0, 40.0]
+            t_start_end = [2.5, 895.0]
+        elif road_name == "US101":
+            x_idx = [
+                10.0,
+                50.0,
+                310.0,
+                430.0,
+                610.0,
+                770.0,
+                1050.0,
+                1230.0,
+                1450.0,
+                1510.0,
+                1670.0,
+                1750.0,
+                1810.0,
+            ]
+            x_magn = [
+                20.0,
+                40.0,
+                20.0,
+                60.0,
+                20.0,
+                20.0,
+                40.0,
+                20.0,
+                20.0,
+                20.0,
+                20.0,
+                40.0,
+                60.0,
+            ]
+            t_start_end = [2.5, 2695]
 
     for i, data_entry in enumerate(data_list):
         vmin = np.min(data_entry.T)
@@ -246,7 +289,12 @@ def rho_v_plot(
                     axes[i, 0].add_patch(rect_test[i])
                 elif task == "reconstruction":
                     for k in range(len(x_idx)):
-                        rect = make_rect((2.5, x_idx[k]), 895.0, x_magn[k], "#FF00FF")
+                        rect = make_rect(
+                            (t_start_end[0], x_idx[k]),
+                            t_start_end[1],
+                            x_magn[k],
+                            "#FF00FF",
+                        )
                         axes[i, 0].add_patch(rect)
 
                 axes[i, 0].set_title("Data")
@@ -426,9 +474,9 @@ def fill_error_table(results, train_idx, test_idx, task):
     print(table)
 
 
-road_name = "US80"
+road_name = "US101"
 task = "reconstruction"
-test_name = f"us80_{task}"
+test_name = f"us101_{task}"
 data_info = preprocess_data(road_name)
 _, _, X_training, X_test = build_dataset(
     data_info["t_sampled_circ"],
@@ -504,6 +552,8 @@ if road_name == "US101":
         sr_triangular_params = [5.51771616672578701923]
         sr_idm_params = [4.84447824548921701648]
         sr_del_castillo_params = [5.28575671688020953809]
+
+        cb_ticks = [[0, 0.1, 0.2], [2, 36, 70]]
 
     x_ticks = [0, 1350, 2700]
     y_ticks = [10, 990, 1970]
@@ -635,7 +685,9 @@ elif task == "reconstruction":
     num_tr = int(X_training.shape[0] / len(data_info["t_sampled_circ"]))
     num_test = int(X_test.shape[0] / len(data_info["t_sampled_circ"]))
     train_idx = X_training[:num_tr, 0].astype(np.int64) + 1
-    train_idx = np.concatenate((train_idx, [0, 76, 77, 78]))
+    # add missing indexes removed for the BC
+    shape = data_info["density"].shape[0]
+    train_idx = np.concatenate((train_idx, [0, shape - 3, shape - 2, shape - 1]))
     test_idx = X_test[:num_test, 0].astype(np.int64) + 1
 
 
@@ -661,7 +713,16 @@ plot_diagrams(
 )
 
 rho_v_plot(
-    results, data_info, v, x_sampled_circ, test_name, x_ticks, y_ticks, cb_ticks, task
+    results,
+    data_info,
+    v,
+    x_sampled_circ,
+    test_name,
+    x_ticks,
+    y_ticks,
+    cb_ticks,
+    road_name,
+    task,
 )
 rho_v_plot(
     sr_results,
@@ -672,6 +733,7 @@ rho_v_plot(
     x_ticks,
     y_ticks,
     cb_ticks,
+    road_name,
     task,
 )
 
