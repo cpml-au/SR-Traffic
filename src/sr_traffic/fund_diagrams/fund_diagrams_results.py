@@ -116,7 +116,7 @@ def plot_diagrams(
     models_names = list(results.keys())
     num_models = len(models_names)
 
-    fig_dim = (3 * num_models, num_models - 1.2)
+    fig_dim = (3 * num_models, 4)
     fig, axes = plt.subplots(1, num_models, figsize=fig_dim)
     for i in range(num_models):
         name = models_names[i]
@@ -158,11 +158,11 @@ def plot_diagrams(
     fig.legend(
         handles,
         labels,
-        bbox_to_anchor=(0.68, 1.15),
+        bbox_to_anchor=(0.63, 1.15),
         ncol=3,
         fancybox=True,
         shadow=True,
-        fontsize=15,
+        fontsize=18,
         markerscale=3,
     )
     plt.tight_layout()
@@ -208,10 +208,10 @@ def rho_v_plot(
     cmap = "rainbow"
 
     if task == "prediction":
-        rect_0_train = make_rect((2.5, 10), 1615, 1960, "red")
-        rect_1_train = make_rect((2.5, 10), 1615, 1960, "red")
-        rect_0_test = make_rect((1622.5, 10), 1075, 1960, "#FF7F50")
-        rect_1_test = make_rect((1622.5, 10), 1075, 1960, "#FF7F50")
+        rect_0_train = make_rect((2.5, 10), 535.0, 1500.0, "red")
+        rect_1_train = make_rect((2.5, 10), 535.0, 1500.0, "red")
+        rect_0_test = make_rect((542.5, 10), 355, 1500.0, "#FF7F50")
+        rect_1_test = make_rect((542.5, 10), 355, 1500.0, "#FF7F50")
 
         rect_train = [rect_0_train, rect_1_train]
         rect_test = [rect_0_test, rect_1_test]
@@ -474,9 +474,9 @@ def fill_error_table(results, train_idx, test_idx, task):
     print(table)
 
 
-road_name = "US101"
-task = "reconstruction"
-test_name = f"us101_{task}"
+road_name = "US80"
+task = "prediction"
+test_name = f"i80_{task}"
 data_info = preprocess_data(road_name)
 _, _, X_training, X_test = build_dataset(
     data_info["t_sampled_circ"],
@@ -635,7 +635,7 @@ for name, (flux_fn, _, params) in models.items():
     sr_models[sr_name] = (sr_flux, sr_flux_der, params)
 
 
-# models = models | sr_models
+models = models | sr_models
 # solve LWR model for all the fundamental diagrams
 results = {}
 for name, (flux_fn, flux_der_fn, _) in models.items():
@@ -697,7 +697,7 @@ data_info["t_sampled_circ"] *= data_info["t_len"]
 
 # plot params
 width = 443.57848
-fontsize = 12
+fontsize = 15
 plt.rcParams["font.size"] = fontsize
 plt.rcParams["font.sans-serif"] = "Dejavu Sans"
 plt.rcParams["font.family"] = "sans-serif"

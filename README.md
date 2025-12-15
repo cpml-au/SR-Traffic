@@ -1,6 +1,6 @@
 # SR-Traffic
 
-This repository contains the code used to produce the results of the paper [SR-Traffic: Discovering Macroscopic Traffic Flow Models with Symbolic Regression](link)
+This repository contains the code used to produce the results of the paper [SR-Traffic: Discovering Macroscopic Traffic Flow Models with Symbolic Regression](https://ml4physicalsciences.github.io/2025/files/NeurIPS_ML4PS_2025_105.pdf)
 
 ## Installation
 
@@ -43,3 +43,12 @@ $ python src/sr_traffic/learning/stgp_traffic.py
 You can change the parameters of the algorithm modifying `stgp_traffic.yaml`.
 
 ## Citing
+
+```
+@article{mantisr,
+  title={{SR}-{T}raffic: {D}iscovering {M}acroscopic {T}raffic {F}low {M}odels with {S}ymbolic {R}egression},
+  author={Manti, S. and Mohammadian, S. and Treiber, M. and Lucantonio, A.},
+  journal={Neural Information Processing Systems, ML4PS Workshop},
+  year={2025}
+}
+```
