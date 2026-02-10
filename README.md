@@ -1,5 +1,9 @@
 # SR-Traffic
 
+<p align="center">
+<img src="readme_figure.png" alt="My figure" width="100%">
+</p>
+
 This repository contains the code used to produce the results of the paper [SR-Traffic: Discovering Macroscopic Traffic Flow Models with Symbolic Regression](https://ml4physicalsciences.github.io/2025/files/NeurIPS_ML4PS_2025_105.pdf)
 
 ## Installation
