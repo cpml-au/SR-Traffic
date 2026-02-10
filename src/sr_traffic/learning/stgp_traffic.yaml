@@ -54,7 +54,7 @@ gp:
   num_cpus: 1
   batch_size: 1
   max_calls: 2
-  road_name: "US101"
-  task: "reconstruction"
-  # ansatz: {"flux": triangular_flux, "v": triangular_v, "opt_coeffs":  [0.37013956, 1.48964708, 6.59672108]}
-  ansatz: {"flux": IDM_flux, "v": inverse_IDM, "opt_coeffs": [0.13046561, 0.74381154, 0.05752636, 0.54561196]}
+  road_name: "US80"
+  task: "prediction"
+  ansatz: {"flux": triangular_flux, "v": triangular_v, "opt_coeffs":  [0.37013956, 1.48964708, 6.59672108]}
+  # ansatz: {"flux": IDM_flux, "v": inverse_IDM, "opt_coeffs": [0.13046561, 0.74381154, 0.05752636, 0.54561196]}

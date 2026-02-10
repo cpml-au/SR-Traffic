@@ -107,13 +107,13 @@ def stgp_traffic_plots(
     )
 
     # tts
-    tts_data = np.trapz(
-        np.trapz(density, t_sampled_circ, axis=1),
+    tts_data = np.trapezoid(
+        np.trapezoid(density, t_sampled_circ, axis=1),
         x_sampled_circ.flatten(),
         axis=0,
     )
-    tts = np.trapz(
-        np.trapz(rho_comp, t_sampled_circ, axis=1),
+    tts = np.trapezoid(
+        np.trapezoid(rho_comp, t_sampled_circ, axis=1),
         x_sampled_circ.flatten(),
         axis=0,
     )

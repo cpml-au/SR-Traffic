@@ -345,7 +345,6 @@ def eval_MSE_and_tune_constants(
 
         # check feasibility of the solution
         v_unf = v_check_fn(ind_consts, rho_test, S, ansatz["v"], ansatz["opt_coeffs"])
-        print(v_unf, x)
         if v_unf:
             return threshold
 
@@ -538,85 +537,10 @@ def set_prb(
         "linear_right": all_flats["flat_linear_right_D"],
     }
 
-    def flat_par_P_wrap(x):
-        return all_flats["flat_parabolic_P"](C.CochainP0(S, x)).coeffs
-
-    def flat_par_D_wrap(x):
-        return all_flats["flat_parabolic_D"](C.CochainD0(S, x)).coeffs
-
-    def flat_lin_left_P_wrap(x):
-        return all_flats["flat_linear_left_P"](C.CochainP0(S, x)).coeffs
-
-    def flat_lin_left_D_wrap(x):
-        return all_flats["flat_linear_left_D"](C.CochainD0(S, x)).coeffs
-
-    def flat_lin_right_P_wrap(x):
-        return all_flats["flat_linear_right_P"](C.CochainP0(S, x)).coeffs
-
-    def flat_lin_right_D_wrap(x):
-        return all_flats["flat_linear_right_D"](C.CochainD0(S, x)).coeffs
-
-    flat_par_P = vmap(flat_par_P_wrap)
-    flat_par_D = vmap(flat_par_D_wrap)
-    flat_lin_left_P = vmap(flat_lin_left_P_wrap)
-    flat_lin_left_D = vmap(flat_lin_left_D_wrap)
-    flat_lin_right_P = vmap(flat_lin_right_P_wrap)
-    flat_lin_right_D = vmap(flat_lin_right_D_wrap)
-
-    def flat_primitive_par_P(c: C.CochainD0):
-        return C.CochainP1(S, flat_par_P(c.coeffs.T)[:, :, 0].T)
-
-    def flat_primitive_par_D(c: C.CochainD0):
-        return C.CochainD1(S, flat_par_D(c.coeffs.T)[:, :, 0].T)
-
-    def flat_primitive_lin_left_P(c: C.CochainD0):
-        return C.CochainP1(S, flat_lin_left_P(c.coeffs.T)[:, :, 0].T)
-
-    def flat_primitive_lin_left_D(c: C.CochainD0):
-        return C.CochainD1(S, flat_lin_left_D(c.coeffs.T)[:, :, 0].T)
-
-    def flat_primitive_lin_right_P(c: C.CochainD0):
-        return C.CochainP1(S, flat_lin_right_P(c.coeffs.T)[:, :, 0].T)
-
-    def flat_primitive_lin_right_D(c: C.CochainD0):
-        return C.CochainD1(S, flat_lin_right_D(c.coeffs.T)[:, :, 0].T)
-
     pset = gp.PrimitiveSetTyped("MAIN", [C.CochainP0], C.CochainP0)
-    pset.addPrimitive(
-        flat_primitive_par_P, [C.CochainP0], C.CochainP1, name="flat_parP0"
-    )
-    pset.addPrimitive(
-        flat_primitive_par_D, [C.CochainD0], C.CochainD1, name="flat_parD0"
-    )
-    pset.addPrimitive(
-        flat_primitive_lin_left_P,
-        [C.CochainP0],
-        C.CochainP1,
-        name="flat_lin_leftP0",
-    )
-    pset.addPrimitive(
-        flat_primitive_lin_left_D,
-        [C.CochainD0],
-        C.CochainD1,
-        name="flat_lin_leftD0",
-    )
-    pset.addPrimitive(
-        flat_primitive_lin_right_P,
-        [C.CochainP0],
-        C.CochainP1,
-        name="flat_lin_rightP0",
-    )
-    pset.addPrimitive(
-        flat_primitive_lin_right_D,
-        [C.CochainD0],
-        C.CochainD1,
-        name="flat_lin_rightD0",
-    )
-
-    # add float primitives
 
     # add special primitives
-    add_new_primitives(pset)
+    add_new_primitives(pset, S, all_flats)
 
     # add constants and terminals
     pset.addTerminal(object, float, "c")
@@ -758,10 +682,12 @@ if __name__ == "__main__":
         task,
     )
 
-    # seed = [
-    #     "AddCP0(ones, conv_1P0(delP1(flat_lin_leftP0(ExpP0(MFP0(SqrtP0(SquareP0(rho)), c)))), ExpP0(MFP0(rho, c))))"
-    # ]
-    seed = ["SquareP0(ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, c))))"]
+    if task == "prediction":
+        seed = [
+            "AddCP0(ones, conv_1P0(delP1(flat_lin_leftP0(ExpP0(MFP0(SqrtP0(SquareP0(rho)), c)))), ExpP0(MFP0(rho, c))))"
+        ]
+    elif task == "reconstruction":
+        seed = ["SquareP0(ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, c))))"]
     # seed = None
     output_path = "."
 
