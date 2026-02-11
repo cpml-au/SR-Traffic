@@ -3,6 +3,7 @@ import jax.numpy as jnp
 from jax import vmap
 from dctkit.dec import cochain as C
 from dctkit.dec.flat import flat
+from dctkit import config
 from sr_traffic.data.data import preprocess_data, build_dataset
 from sr_traffic.fund_diagrams import fund_diagrams_def as tf_utils
 from sr_traffic.utils import flat as tf_flat
@@ -12,9 +13,14 @@ from functools import partial
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.patches as patches
+import numpy.typing as npt
+from typing import Dict, List, Callable
+import argparse
+
+config()
 
 
-def sr_term(rho, flats, params, task):
+def sr_term(rho: npt.NDArray, flats: Dict, params: List, task: str):
     if task == "prediction":
         ones = C.Cochain(rho.dim, rho.is_primal, rho.complex, jnp.ones_like(rho.coeffs))
         conv_term = C.convolution(
@@ -38,14 +44,20 @@ def sr_term(rho, flats, params, task):
     return sr_term
 
 
-def sr_flux_generator(flux, flats, params, task):
+def sr_flux_generator(flux: Callable, flats: Dict, params: List, task: str):
     def sr_flux(rho):
         return C.cochain_mul(flux(rho), sr_term(rho, flats, params, task))
 
     return sr_flux
 
 
-def rescale_rho_v_f(rhoP0, rho, v, f, data_info):
+def rescale_rho_v_f(
+    rhoP0: npt.NDArray,
+    rho: npt.NDArray,
+    v: npt.NDArray,
+    f: npt.NDArray,
+    data_info: Dict,
+):
     return (
         rhoP0 * data_info["density_max"],
         rho * data_info["density_max"],
@@ -54,7 +66,14 @@ def rescale_rho_v_f(rhoP0, rho, v, f, data_info):
     )
 
 
-def compute_errors(true_rho, true_v, true_f, model_rho, model_v, model_f):
+def compute_errors(
+    true_rho: npt.NDArray,
+    true_v: npt.NDArray,
+    true_f: npt.NDArray,
+    model_rho: npt.NDArray,
+    model_v: npt.NDArray,
+    model_f: npt.NDArray,
+):
     rho_err = jnp.sqrt(jnp.sum((true_rho - model_rho) ** 2)) / jnp.sqrt(
         jnp.sum(true_rho**2)
     )
@@ -63,13 +82,26 @@ def compute_errors(true_rho, true_v, true_f, model_rho, model_v, model_f):
     return rho_err, v_err, f_err
 
 
-def compute_tts_error(true_rho, model_rho, t_vec, x_vec):
-    tts_true = np.trapz(np.trapz(true_rho, t_vec, axis=1), x_vec, axis=0)
-    tts_model = np.trapz(np.trapz(model_rho, t_vec, axis=1), x_vec, axis=0)
+def compute_tts_error(
+    true_rho: npt.NDArray,
+    model_rho: npt.NDArray,
+    t_vec: npt.NDArray,
+    x_vec: npt.NDArray,
+):
+    tts_true = np.trapezoid(np.trapezoid(true_rho, t_vec, axis=1), x_vec, axis=0)
+    tts_model = np.trapezoid(np.trapezoid(model_rho, t_vec, axis=1), x_vec, axis=0)
     return np.abs((tts_model - tts_true) / tts_true)
 
 
-def simulate_model(flux_fn, flux_der_fn, data_info, S, flats, step, rho_bnd_array):
+def simulate_model(
+    flux_fn: Callable,
+    flux_der_fn: Callable,
+    data_info: Dict,
+    S: SimplicialComplex,
+    flats: Dict,
+    step: int,
+    rho_bnd_array: npt.NDArray,
+):
     rho, v, f = godunov_solver(
         data_info["rho_0"],
         S,
@@ -98,7 +130,15 @@ def simulate_model(flux_fn, flux_der_fn, data_info, S, flats, step, rho_bnd_arra
 
 
 def plot_diagrams(
-    results, rhoP0, v, f, name_diagram, test_name, train_idx, test_idx, task
+    results: Dict,
+    rhoP0: npt.NDArray,
+    v: npt.NDArray,
+    f: npt.NDArray,
+    name_diagram: str,
+    test_name: str,
+    train_idx: npt.NDArray,
+    test_idx: npt.NDArray,
+    task: str,
 ):
 
     if name_diagram == "velocity":
@@ -170,7 +210,7 @@ def plot_diagrams(
     plt.clf()
 
 
-def make_rect(xy, width, height, color):
+def make_rect(xy: npt.NDArray, width: float, height: float, color: str):
     return patches.Rectangle(
         xy,
         width,
@@ -332,7 +372,7 @@ def rho_v_plot(
     plt.clf()
 
 
-def predicted_true_plots(results, v, f, test_name):
+def predicted_true_plots(results: Dict, v: npt.NDArray, f: npt.NDArray, test_name: str):
     models_names = list(results.keys())
     num_models = len(models_names)
     fig_dim = (3 * num_models, num_models)
@@ -391,12 +431,14 @@ def predicted_true_plots(results, v, f, test_name):
 
 
 # Highlight best values
-def format_entry(val, rank, is_best):
+def format_entry(val: float, rank: float, is_best: bool):
     formatted = f"{val:.3f} ({rank})"
     return f"\\textbf{{{formatted}}}" if is_best else formatted
 
 
-def fill_error_table(results, train_idx, test_idx, task):
+def fill_error_table(
+    results: Dict, train_idx: npt.NDArray, test_idx: npt.NDArray, task: str
+):
     t_errors = []
     if task == "prediction":
         train_idx_slice = (slice(None), train_idx)
@@ -474,9 +516,16 @@ def fill_error_table(results, train_idx, test_idx, task):
     print(table)
 
 
-road_name = "US80"
-task = "prediction"
-test_name = f"i80_{task}"
+parser = argparse.ArgumentParser()
+parser.add_argument("--road_name", type=str, required=True)
+parser.add_argument("--task", type=str, required=True)
+
+args = parser.parse_args()
+
+road_name = args.road_name
+task = args.task
+test_name = f"{road_name}_{task}"
+
 data_info = preprocess_data(road_name)
 _, _, X_training, X_test = build_dataset(
     data_info["t_sampled_circ"],

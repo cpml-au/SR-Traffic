@@ -1,10 +1,13 @@
 import jax.numpy as jnp
 import dctkit.dec.cochain as C
+from dctkit.mesh.simplex import SimplicialComplex
 from jax import vmap, grad, lax, jacfwd
 from functools import partial
+import numpy.typing as npt
+from typing import Callable
 
 
-def Greenshields_flux(rho, v_max, rho_max):
+def Greenshields_flux(rho: C.Cochain, v_max: float, rho_max: float):
     return C.Cochain(
         rho.dim,
         rho.is_primal,
@@ -13,7 +16,7 @@ def Greenshields_flux(rho, v_max, rho_max):
     )
 
 
-def Greenberg_flux(rho, v_max, rho_max):
+def Greenberg_flux(rho: C.Cochain, v_max: float, rho_max: float):
     return C.Cochain(
         rho.dim,
         rho.is_primal,
@@ -22,7 +25,7 @@ def Greenberg_flux(rho, v_max, rho_max):
     )
 
 
-def Underwood_flux(rho, v_max, rho_max):
+def Underwood_flux(rho: C.Cochain, v_max: float, rho_max: float):
     return C.Cochain(
         rho.dim,
         rho.is_primal,
@@ -31,11 +34,7 @@ def Underwood_flux(rho, v_max, rho_max):
     )
 
 
-def Weidmann_v(rho, v_max, rho_max, lambda_w):
-    return v_max * (1 - jnp.exp(-lambda_w * (1 / rho - 1 / rho_max)))
-
-
-def Weidmann_flux(rho, v_max, rho_max, lambda_w):
+def Weidmann_flux(rho: C.Cochain, v_max: float, rho_max: float, lambda_w: float):
     return C.Cochain(
         rho.dim,
         rho.is_primal,
@@ -44,7 +43,7 @@ def Weidmann_flux(rho, v_max, rho_max, lambda_w):
     )
 
 
-def triangular_flux(rho, V_0, l_eff, T):
+def triangular_flux(rho: C.Cochain, V_0: float, l_eff: float, T: float):
     rho_critic = 1 / (V_0 * T + l_eff)
     free_traffic_idx = rho.coeffs <= rho_critic
     congested_traffic_idx = (rho.coeffs > rho_critic) * (rho.coeffs <= 1 / l_eff)
@@ -57,15 +56,19 @@ def triangular_flux(rho, V_0, l_eff, T):
     return C.Cochain(rho.dim, rho.is_primal, rho.complex, flux_coeffs)
 
 
-def Greenshields_v(rho, v_max, rho_max):
+def Greenshields_v(rho: npt.NDArray, v_max: float, rho_max: float):
     return v_max * (1 - rho / rho_max)
 
 
-def Underwood_v(rho, V_0, rho_jam):
-    return V_0 * jnp.exp(-rho / rho_jam)
+def Underwood_v(rho: npt.NDArray, v_max: float, rho_max: float):
+    return v_max * jnp.exp(-rho / rho_max)
 
 
-def triangular_v(rho, V_0, l_eff, T):
+def Weidmann_v(rho: npt.NDArray, v_max: float, rho_max: float, lambda_w: float):
+    return v_max * (1 - jnp.exp(-lambda_w * (1 / rho - 1 / rho_max)))
+
+
+def triangular_v(rho: npt.NDArray, V_0: float, l_eff: float, T: float):
     rho_critic = 1 / (V_0 * T + l_eff)
     free_traffic_idx = rho <= rho_critic
     congested_traffic_idx = (rho > rho_critic) * (rho <= 1 / l_eff)
@@ -76,16 +79,18 @@ def triangular_v(rho, V_0, l_eff, T):
     return v_coeffs
 
 
-def IDM_fn(v, s0, T, delta, v0):
+def IDM_fn(v: npt.NDArray, s0: float, T: float, delta: float, v0: float):
     return (s0 + v * T) / jnp.sqrt(1 - (v / v0) ** delta)
 
 
-def IDM_eq(s, v, s0, T, delta, v0):
+def IDM_eq(
+    s: npt.NDArray, v: npt.NDArray, s0: float, T: float, delta: float, v0: float
+):
     return 1 - (v / v0) ** delta - ((s0 + v * T) / s) ** 2
 
 
 @partial(vmap, in_axes=(0, None, None, None, None))
-def inverse_IDM(s_target, s0, T, delta, v0):
+def inverse_IDM(s_target: npt.NDArray, s0: float, T: float, delta: float, v0: float):
     def f(v):
         return IDM_eq(s_target, v, s0, T, delta, v0)
 
@@ -109,14 +114,16 @@ def inverse_IDM(s_target, s0, T, delta, v0):
     return v_final
 
 
-def IDM_flux(rho, s0, T, delta, v0):
+def IDM_flux(rho: C.Cochain, s0: float, T: float, delta: float, v0: float):
     rho_coeffs = rho.coeffs.ravel()
     s = 1 / rho_coeffs - 1
     v = inverse_IDM(s, s0, T, delta, v0)
     return C.Cochain(rho.dim, rho.is_primal, rho.complex, rho_coeffs * v)
 
 
-def del_castillo_v(rho, C_jam, V_max, rho_max, theta):
+def del_castillo_v(
+    rho: npt.NDArray, C_jam: float, V_max: float, rho_max: float, theta: float
+):
     rho_norm = rho / rho_max
     a = V_max / C_jam
     v = (
@@ -131,12 +138,14 @@ def del_castillo_v(rho, C_jam, V_max, rho_max, theta):
     return v
 
 
-def del_castillo_flux(rho, C_jam, V_max, rho_max, theta):
+def del_castillo_flux(
+    rho: C.Cochain, C_jam: float, V_max: float, rho_max: float, theta: float
+):
     v = del_castillo_v(rho.coeffs, C_jam, V_max, rho_max, theta)
     return C.Cochain(rho.dim, rho.is_primal, rho.complex, rho.coeffs * v)
 
 
-def define_flux_der(S, flux):
+def define_flux_der(S: SimplicialComplex, flux: Callable):
     def flux_wrap(rho_coeffs, *args):
         rho = C.CochainP0(S, rho_coeffs)
         return flux(rho, *args).coeffs.flatten()
@@ -147,26 +156,3 @@ def define_flux_der(S, flux):
         return C.CochainP0(rho.complex, jnp.diag(der(rho.coeffs.flatten(), *args)))
 
     return der_auto
-
-
-if __name__ == "__main__":
-    # FIXME: this should become a test
-    from jax import jit
-    import time
-
-    opt_idm = [0.95870305, 0.9524395, 0.68423716, 0.41707987]
-    flux_idm_args = {
-        "s0": opt_idm[0],
-        "T": opt_idm[1],
-        "delta": opt_idm[2],
-        "v0": opt_idm[3],
-    }
-    s_targets = jnp.linspace(10, 100, 100)
-    jit_inv = jit(inverse_IDM, static_argnums=(1, 2, 3, 4))
-    tic = time.perf_counter()
-    v = jit_inv(s_targets, opt_idm[0], opt_idm[1], opt_idm[2], opt_idm[3])
-    s_comp = IDM_fn(v, **flux_idm_args)
-    toc = time.perf_counter()
-    print(s_comp, s_targets)
-    print(s_comp - s_targets)
-    print(toc - tic)

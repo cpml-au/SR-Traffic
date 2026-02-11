@@ -2,6 +2,7 @@ from dctkit.dec import cochain as C
 from sr_traffic.data.data import preprocess_data, build_dataset
 import sr_traffic.fund_diagrams.fund_diagrams_def as tf_utils
 from sr_traffic.utils.godunov import godunov_solver
+from sr_traffic.learning.utils import resolve_function
 import jax.numpy as jnp
 from jax import vmap
 import pygmo as pg
@@ -9,13 +10,21 @@ import time
 from functools import partial
 import sr_traffic.utils.flat as tf_flat
 from dctkit.dec.flat import flat
+from dctkit.mesh.simplex import SimplicialComplex
 from jax import jit
 from dctkit import config
+import yaml
+import argparse
+import numpy.typing as npt
+from typing import Callable, Dict, List
+
 
 config()
 
 
-def relative_squared_error(x, x_true, idx, step, task):
+def relative_squared_error(
+    x: npt.NDArray, x_true: npt.NDArray, idx: npt.NDArray, step: int, task: str
+):
     x_norm = jnp.sum(x_true**2)
     if task == "prediction":
         error = jnp.sum((x[1:-3, idx * step].ravel("F") - x_true[:]) ** 2)
@@ -27,19 +36,20 @@ def relative_squared_error(x, x_true, idx, step, task):
 class Calibration:
     def __init__(
         self,
-        S,
-        rho,
-        v,
-        f,
-        rho_god,
-        num_t_points,
-        delta_t_refined,
-        step,
-        train_idx,
-        flux,
-        flux_der,
-        flats,
-        task,
+        S: SimplicialComplex,
+        rho: npt.NDArray,
+        v: npt.NDArray,
+        f: npt.NDArray,
+        rho_god: npt.NDArray,
+        num_t_points: int,
+        delta_t_refined: float,
+        step: int,
+        train_idx: npt.NDArray,
+        flux: Callable,
+        flux_der: Callable,
+        flats: Dict,
+        bounds: List,
+        task: str,
     ):
         self.S = S
         self.rho = rho
@@ -53,6 +63,7 @@ class Calibration:
         self.flux = flux
         self.flux_der = flux_der
         self.flats = flats
+        self.bounds = bounds
         self.task = task
 
     @partial(jit, static_argnums=(0, 2))
@@ -89,21 +100,25 @@ class Calibration:
         total_error = self.error(flux_cal_params, num_t_points)[0]
         if jnp.isnan(total_error) or total_error >= 1e3:
             total_error = 1e3
-
-        print(total_error, flux_cal_params)
         return [total_error]
 
     def get_bounds(self):
-        # return ([0.1, 0.0, 0.0], [1.0, 1.3, 10.0])
-        # return ([0.0, 0.0, 0.0], [0.7, 5.0, 10.0])
-        # return ([0.0, 0], [1, 1.3])
-        # return ([0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0])
-        return ([0, 0.0, 0.0, 1.0], [1.0, 1.0, 1.0, 10.0])
+        return self.bounds
 
 
 if __name__ == "__main__":
-    task = "reconstruction"
-    data_info = preprocess_data("US101")
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--config", type=str, required=True)
+
+    args = parser.parse_args()
+
+    yamlfile = args.config
+    with open(yamlfile) as config_file:
+        config_file_data = yaml.safe_load(config_file)
+
+    task = config_file_data["task"]
+    data_info = preprocess_data(config_file_data["road_name"])
     _, _, X_training, X_test = build_dataset(
         data_info["t_sampled_circ"],
         data_info["S"],
@@ -156,7 +171,7 @@ if __name__ == "__main__":
         "linear_left_v": flat_left,
     }
 
-    flux = tf_utils.del_castillo_flux
+    flux = resolve_function(config_file_data["flux"])
     flux_der = tf_utils.define_flux_der(S, flux)
 
     if task == "prediction":
@@ -181,15 +196,15 @@ if __name__ == "__main__":
         flux,
         flux_der,
         flats,
+        config_file_data["bounds"],
         task,
     )
-    algo = pg.algorithm(pg.sea(gen=100))
+    algo = pg.algorithm(pg.sea(gen=config_file_data["opt"]["num_gen"]))
     print("Calibration started")
     tic = time.time()
     prob = pg.problem(calib)
     algo.set_verbosity(1)
-    pop = pg.population(prob, size=10)
-    pop.push_back(x=[0.21205058, 0.55683342, 0.82425097, 6.70846888])
+    pop = pg.population(prob, size=config_file_data["opt"]["num_ind"])
     pop = algo.evolve(pop)
     toc = time.time()
     print(f"Done in {toc-tic} s!")

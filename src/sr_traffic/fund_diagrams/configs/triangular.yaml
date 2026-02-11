@@ -1,0 +1,7 @@
+road_name: US80
+task: prediction
+flux: triangular_flux
+bounds: [[0.0, 0.0, 0.0], [0.7, 5.0, 10.0]]
+opt:
+  num_ind: 1000
+  num_gen: 100

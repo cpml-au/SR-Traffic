@@ -1,0 +1,7 @@
+road_name: US80
+task: prediction
+flux: IDM_flux
+bounds: [[0.0, 0.0, 0.0, 0.0], [1.0, 1.0, 1.0, 1.0]]
+opt:
+  num_ind: 1000
+  num_gen: 100
