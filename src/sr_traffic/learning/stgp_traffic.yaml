@@ -54,6 +54,7 @@ gp:
   num_cpus: 1
   batch_size: 1
   max_calls: 2
+  set_seed: True
   road_name: "US80"
   task: "prediction"
   ansatz: {"flux": triangular_flux, "v": triangular_v, "opt_coeffs":  [0.37013956, 1.48964708, 6.59672108]}

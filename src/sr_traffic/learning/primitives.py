@@ -1,11 +1,11 @@
-from flex.gp.primitives import generate_primitive_variants, PrimitiveParams
+from flex.gp.primitives import generate_primitive_variants
 from flex.gp.jax_primitives import *
 from functools import partial
 from dctkit.dec import cochain as C
-from jax import Array
-import jax.numpy as jnp
+from dctkit.mesh.simplex import SimplicialComplex
 from jax import vmap
 from deap import gp
+from typing import Dict
 
 
 def constant_sub(k: float, c: C.Cochain) -> C.Cochain:
@@ -21,7 +21,9 @@ def constant_sub(k: float, c: C.Cochain) -> C.Cochain:
     return C.Cochain(c.dim, c.is_primal, c.complex, k - c.coeffs)
 
 
-def add_new_primitives(pset, S, all_flats):
+def add_new_primitives(
+    pset: gp.PrimitiveSetTyped, S: SimplicialComplex, all_flats: Dict
+):
     # Define the modules and functions needed to eval inputs and outputs
     modules_functions = {"dctkit.dec": ["cochain"]}
 
