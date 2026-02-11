@@ -25,18 +25,18 @@ $ pip install -e .
 To reproduce the results of the paper just run
 
 ```bash
-$ python src/sr_traffic/fund_diagrams/fund_diagrams_results.py
+$ python src/sr_traffic/fund_diagrams/fund_diagrams_results.py --road_name {road_name} --task {task_name}
 ```
 
-Make sure to update the task name in `fund_diagrams_results.py` so it matches the specific task you want to reproduce.
+where `{road_name}` is either `US101` or `US80`, and `{road_name}` is either `prediction` or `reconstruction`.
 
 To re-calibrate a given fundamental diagram, run
 
 ```bash
-$ python src/sr_traffic/fund_diagrams/fund_diagrams_calibration.py
+$ python src/sr_traffic/fund_diagrams/fund_diagrams_calibration.py  --config src/sr_traffic/fund_diagrams/configs/{fnd_name}.yaml
 ```
 
-By modifying just a few lines in `fund_diagrams_calibration.py`, you can easily switch the fundamental diagram, select a different task, and adjust the optimizer type or its parameters.
+where`{fnd_name}` is either `greenshields`, `triangular`, `Weidmann`, `del_castillo`, or `idm`.
 
 Finally, to perform a run of SR-Traffic, run
 
