@@ -2,13 +2,10 @@ import jax.numpy as jnp
 from jax import Array
 import dctkit as dt
 import dctkit.dec.cochain as C
-from dctkit.mesh import util
+from dctkit.mesh.simplex import SimplicialComplex
 from dctkit.dec.flat import flat
 from functools import partial
-
-# FIXME: add the docs!
-
-dt.config()
+import numpy.typing as npt
 
 
 def build_rolling_matrix(v: Array):
@@ -111,7 +108,7 @@ def get_linear_right_interpolation(
     return coeffs
 
 
-def define_flats(S, zeros_P, zeros_D):
+def define_flats(S: SimplicialComplex, zeros_P: npt.NDArray, zeros_D: npt.NDArray):
     W_parabolic_D_T = get_parabolic_weights(S.num_nodes, False)
     W_parabolic_P_T = get_parabolic_weights(S.num_nodes, True)
     I_linear_left = get_linear_left_interpolation

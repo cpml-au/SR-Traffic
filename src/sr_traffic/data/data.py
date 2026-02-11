@@ -2,7 +2,6 @@ import numpy as np
 import os
 from typing import Tuple
 import numpy.typing as npt
-from dctkit import config
 from sklearn.model_selection import train_test_split
 from dctkit.mesh.simplex import SimplicialComplex
 from dctkit.dec import cochain as C
@@ -15,12 +14,10 @@ from dctkit.mesh import util
 from scipy.interpolate import interp1d
 
 
-config()
-
 data_path = os.path.dirname(os.path.realpath(__file__))
 
 
-def preprocess_data(road_name):
+def preprocess_data(road_name: str):
     road_path = os.path.join(data_path, f"{road_name}")
     if road_name == "US101":
         v_int_path = os.path.join(road_path, f"NGSIM_{road_name}_Velocity_Data.txt")

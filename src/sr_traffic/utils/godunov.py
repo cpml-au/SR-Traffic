@@ -1,10 +1,19 @@
 from dctkit.dec import cochain as C
+from dctkit.mesh.simplex import SimplicialComplex
 import jax.numpy as jnp
 from jax import lax, jit
 from functools import partial
+from typing import Callable, Dict, Tuple
+import numpy.typing as npt
 
 
-def compute_flux(S, flux, flux_der, rho_t_coeffs, flats):
+def compute_flux(
+    S: SimplicialComplex,
+    flux: Callable,
+    flux_der: Callable,
+    rho_t_coeffs: npt.NDArray,
+    flats: Dict,
+):
     rho_t = C.CochainD0(S, rho_t_coeffs)
 
     # reconstruct values at cell boundaries
@@ -26,7 +35,15 @@ def compute_flux(S, flux, flux_der, rho_t_coeffs, flats):
     return flux
 
 
-def update_rho(S, flux, flux_der, delta_t, k, rho_t_coeffs, flats):
+def update_rho(
+    S: SimplicialComplex,
+    flux: Callable,
+    flux_der: Callable,
+    delta_t: float,
+    k: float,
+    rho_t_coeffs: npt.NDArray,
+    flats: Dict,
+):
     rho_t = C.CochainD0(S, rho_t_coeffs)
     flux = compute_flux(S, flux, flux_der, rho_t_coeffs, flats)
     rho_tp1_no_diff = C.sub(rho_t, C.scalar_mul(C.star(C.coboundary(flux)), delta_t))
@@ -34,7 +51,17 @@ def update_rho(S, flux, flux_der, delta_t, k, rho_t_coeffs, flats):
     return rho_tp1_pred.coeffs
 
 
-def body_fun(S, rho, flux, flux_der, delta_t, k, flats, rho_t_check, t: float):
+def body_fun(
+    S: SimplicialComplex,
+    rho: npt.NDArray,
+    flux: Callable,
+    flux_der: Callable,
+    delta_t: float,
+    k: float,
+    flats: Dict,
+    rho_t_check: Tuple,
+    t: float,
+):
     rho_t, check = rho_t_check
     rho_tp1 = update_rho(S, flux, flux_der, delta_t, k, rho_t, flats)
     rho_tp1 = rho_tp1.at[0].set(rho[0, t + 1])
@@ -64,14 +91,22 @@ def body_fun(S, rho, flux, flux_der, delta_t, k, flats, rho_t_check, t: float):
     return rho_tp1_check, (rho_tp1_check[0], v_tp1[:-1], flux_tp1[:-1])
 
 
-def main_loop(rho_0, single_iteration, num_t_points):
+def main_loop(rho_0: npt.NDArray, single_iteration: Callable, num_t_points: int):
     init = (rho_0.reshape(-1, 1), False)
     _, rho_v_f = lax.scan(single_iteration, init, jnp.arange(num_t_points - 1))
     return rho_v_f
 
 
 def godunov_solver(
-    rho_0, S, rho_bnd_array, flux, flux_der, delta_t, k, flats, num_t_points
+    rho_0: npt.NDArray,
+    S: SimplicialComplex,
+    rho_bnd_array: npt.NDArray,
+    flux: Callable,
+    flux_der: Callable,
+    delta_t: float,
+    k: float,
+    flats: Dict,
+    num_t_points: int,
 ):
     single_iteration = partial(
         body_fun, S, rho_bnd_array, flux, flux_der, delta_t, k, flats
