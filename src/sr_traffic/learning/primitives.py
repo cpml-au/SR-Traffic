@@ -1,4 +1,4 @@
-from flex.gp.primitives import generate_primitive_variants
+from flex.gp.cochain_primitives import *
 from flex.gp.jax_primitives import *
 from functools import partial
 from dctkit.dec import cochain as C
@@ -27,37 +27,41 @@ def add_new_primitives(
     # Define the modules and functions needed to eval inputs and outputs
     modules_functions = {"dctkit.dec": ["cochain"]}
 
-    subFC = {
-        "fun_info": {"name": "SubFC", "fun": constant_sub},
-        "input": ["float", "cochain.Cochain"],
-        "output": "cochain.Cochain",
-        "att_input": {
-            "complex": ("P", "D"),
-            "dimension": ("0", "1", "2"),
-            "rank": ("SC",),
+    subFC = CochainBasePrimitive(
+        base_name="SubFC",
+        base_fun=constant_sub,
+        input=["float", "cochain.Cochain"],
+        output="cochain.Cochain",
+        att_input={
+            "complex": (Complex.PRIMAL, Complex.DUAL),
+            "dimension": (Dimension.ZERO, Dimension.ONE, Dimension.TWO),
+            "rank": (Rank.SCALAR,),
         },
-        "map_rule": {
+        map_rule={
             "complex": lambda x: x,
             "dimension": lambda x: x,
             "rank": lambda x: x,
         },
-    }
+    )
+
     new_primitives = [subFC]
     for i in range(1, 4):
-        conv_i = {
-            "fun_info": {
-                "name": "conv_" + str(i),
-                "fun": partial(C.convolution, kernel_window=int(i)),
+        conv_i = CochainBasePrimitive(
+            base_name="conv_" + str(i),
+            base_fun=partial(C.convolution, kernel_window=int(i)),
+            input=["cochain.Cochain", "cochain.Cochain"],
+            output="cochain.Cochain",
+            att_input={
+                "complex": (Complex.PRIMAL, Complex.DUAL),
+                "dimension": (Dimension.ZERO,),
+                "rank": (Rank.SCALAR,),
             },
-            "input": ["cochain.Cochain", "cochain.Cochain"],
-            "output": "cochain.Cochain",
-            "att_input": {"complex": ("P", "D"), "dimension": ("0",), "rank": ("SC",)},
-            "map_rule": {
+            map_rule={
                 "complex": lambda x: x,
                 "dimension": lambda x: x,
                 "rank": lambda x: x,
             },
-        }
+        )
         new_primitives.append(conv_i)
 
     new_generated_primitives = list(
