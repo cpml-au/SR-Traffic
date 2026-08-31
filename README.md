@@ -11,13 +11,13 @@ This repository contains the code used to produce the results of the paper [SR-T
 The dependencies are collected in `environment.yaml` and can be installed, after cloning the repository, using [`mamba`]("https://github.com/mamba-org/mamba"):
 
 ```bash
-$ mamba env create -f environment.yaml
+mamba env create -f environment.yaml
 ```
 
 Once the environment is installed and activated, install the library using
 
 ```bash
-$ pip install -e .
+pip install -e .
 ```
 
 ## Usage
@@ -45,6 +45,9 @@ python src/sr_traffic/fd/calibration.py --config src/sr_traffic/fd/configs/{fnd_
 
 where `{fnd_name}` is either `greenshields`, `triangular`, `weidmann`,
 `del_castillo`, or `idm`.
+
+This command calibrates only the predefined baseline diagrams; SR-discovered
+models are searched for and fitted separately by the SR-Traffic pipeline below.
 
 Each file in `src/sr_traffic/fd/configs/` defines one calibration problem:
 

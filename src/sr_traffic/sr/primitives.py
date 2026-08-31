@@ -27,32 +27,41 @@ def add_new_primitives(
     # Define the modules and functions needed to eval inputs and outputs
     modules_functions = {"dctkit.dec": ["cochain"]}
 
-    subFC = CochainBasePrimitive(
-        base_name="SubFC",
-        base_fun=constant_sub,
-        input=["float", "cochain.Cochain"],
-        output="cochain.Cochain",
-        att_input={
-            "complex": (Complex.PRIMAL, Complex.DUAL),
-            "dimension": (Dimension.ZERO, Dimension.ONE, Dimension.TWO),
-            "rank": (Rank.SCALAR,),
-        },
-        map_rule={
-            "complex": lambda x: x,
-            "dimension": lambda x: x,
-            "rank": lambda x: x,
-        },
-    )
+    # SubFC subtracts a cochain pointwise from a scalar; it is not used here.
+    # subFC = CochainBasePrimitive(
+    #     base_name="SubFC",
+    #     base_fun=constant_sub,
+    #     input=["float", "cochain.Cochain"],
+    #     output="cochain.Cochain",
+    #     att_input={
+    #         "complex": (Complex.PRIMAL, Complex.DUAL),
+    #         "dimension": (Dimension.ZERO, Dimension.ONE, Dimension.TWO),
+    #         "rank": (Rank.SCALAR,),
+    #     },
+    #     map_rule={
+    #         "complex": lambda x: x,
+    #         "dimension": lambda x: x,
+    #         "rank": lambda x: x,
+    #     },
+    # )
 
-    new_primitives = [subFC]
-    for i in range(1, 4):
+    new_primitives = []
+    for i in (
+        # conv_1P0 convolves two primal 0-cochains with a one-point kernel.
+        1,
+        # conv_2P0 uses a two-point kernel; it is not used here.
+        # 2,
+        # conv_3P0 convolves two primal 0-cochains with a three-point kernel.
+        3,
+    ):
         conv_i = CochainBasePrimitive(
             base_name="conv_" + str(i),
             base_fun=partial(C.convolution, kernel_window=int(i)),
             input=["cochain.Cochain", "cochain.Cochain"],
             output="cochain.Cochain",
             att_input={
-                "complex": (Complex.PRIMAL, Complex.DUAL),
+                # Only the primal zero-cochain variant is used.
+                "complex": (Complex.PRIMAL,),
                 "dimension": (Dimension.ZERO,),
                 "rank": (Rank.SCALAR,),
             },
@@ -77,77 +86,84 @@ def add_new_primitives(
             out_type = new_primitive[primitive_name].out_type
             pset.addPrimitive(op, in_types, out_type, name=primitive_name)
 
-    # add flats primitives
-    def flat_par_P_wrap(x):
-        return all_flats["flat_parabolic_P"](C.CochainP0(S, x)).coeffs
+    # Parabolic flats are not used by the published expressions.
+    # def flat_par_P_wrap(x):
+    #     return all_flats["flat_parabolic_P"](C.CochainP0(S, x)).coeffs
 
-    def flat_par_D_wrap(x):
-        return all_flats["flat_parabolic_D"](C.CochainD0(S, x)).coeffs
+    # def flat_par_D_wrap(x):
+    #     return all_flats["flat_parabolic_D"](C.CochainD0(S, x)).coeffs
 
     def flat_lin_left_P_wrap(x):
         return all_flats["flat_linear_left_P"](C.CochainP0(S, x)).coeffs
 
-    def flat_lin_left_D_wrap(x):
-        return all_flats["flat_linear_left_D"](C.CochainD0(S, x)).coeffs
+    # Dual-cochain flats are not used by the published expressions.
+    # def flat_lin_left_D_wrap(x):
+    #     return all_flats["flat_linear_left_D"](C.CochainD0(S, x)).coeffs
 
     def flat_lin_right_P_wrap(x):
         return all_flats["flat_linear_right_P"](C.CochainP0(S, x)).coeffs
 
-    def flat_lin_right_D_wrap(x):
-        return all_flats["flat_linear_right_D"](C.CochainD0(S, x)).coeffs
+    # def flat_lin_right_D_wrap(x):
+    #     return all_flats["flat_linear_right_D"](C.CochainD0(S, x)).coeffs
 
-    flat_par_P = vmap(flat_par_P_wrap)
-    flat_par_D = vmap(flat_par_D_wrap)
+    # flat_par_P = vmap(flat_par_P_wrap)
+    # flat_par_D = vmap(flat_par_D_wrap)
     flat_lin_left_P = vmap(flat_lin_left_P_wrap)
-    flat_lin_left_D = vmap(flat_lin_left_D_wrap)
+    # flat_lin_left_D = vmap(flat_lin_left_D_wrap)
     flat_lin_right_P = vmap(flat_lin_right_P_wrap)
-    flat_lin_right_D = vmap(flat_lin_right_D_wrap)
+    # flat_lin_right_D = vmap(flat_lin_right_D_wrap)
 
-    def flat_primitive_par_P(c: C.CochainD0):
-        return C.CochainP1(S, flat_par_P(c.coeffs.T)[:, :, 0].T)
+    # flat_parP0 maps primal node values to primal edges by parabolic interpolation.
+    # def flat_primitive_par_P(c: C.CochainD0):
+    #     return C.CochainP1(S, flat_par_P(c.coeffs.T)[:, :, 0].T)
 
-    def flat_primitive_par_D(c: C.CochainD0):
-        return C.CochainD1(S, flat_par_D(c.coeffs.T)[:, :, 0].T)
+    # flat_parD0 maps dual node values to dual edges by parabolic interpolation.
+    # def flat_primitive_par_D(c: C.CochainD0):
+    #     return C.CochainD1(S, flat_par_D(c.coeffs.T)[:, :, 0].T)
 
+    # flat_lin_leftP0 maps primal node values to edges by leftward interpolation.
     def flat_primitive_lin_left_P(c: C.CochainD0):
         return C.CochainP1(S, flat_lin_left_P(c.coeffs.T)[:, :, 0].T)
 
-    def flat_primitive_lin_left_D(c: C.CochainD0):
-        return C.CochainD1(S, flat_lin_left_D(c.coeffs.T)[:, :, 0].T)
+    # flat_lin_leftD0 maps dual node values to edges by leftward interpolation.
+    # def flat_primitive_lin_left_D(c: C.CochainD0):
+    #     return C.CochainD1(S, flat_lin_left_D(c.coeffs.T)[:, :, 0].T)
 
+    # flat_lin_rightP0 maps primal node values to edges by rightward interpolation.
     def flat_primitive_lin_right_P(c: C.CochainD0):
         return C.CochainP1(S, flat_lin_right_P(c.coeffs.T)[:, :, 0].T)
 
-    def flat_primitive_lin_right_D(c: C.CochainD0):
-        return C.CochainD1(S, flat_lin_right_D(c.coeffs.T)[:, :, 0].T)
+    # flat_lin_rightD0 maps dual node values to edges by rightward interpolation.
+    # def flat_primitive_lin_right_D(c: C.CochainD0):
+    #     return C.CochainD1(S, flat_lin_right_D(c.coeffs.T)[:, :, 0].T)
 
-    pset.addPrimitive(
-        flat_primitive_par_P, [C.CochainP0], C.CochainP1, name="flat_parP0"
-    )
-    pset.addPrimitive(
-        flat_primitive_par_D, [C.CochainD0], C.CochainD1, name="flat_parD0"
-    )
+    # pset.addPrimitive(
+    #     flat_primitive_par_P, [C.CochainP0], C.CochainP1, name="flat_parP0"
+    # )
+    # pset.addPrimitive(
+    #     flat_primitive_par_D, [C.CochainD0], C.CochainD1, name="flat_parD0"
+    # )
     pset.addPrimitive(
         flat_primitive_lin_left_P,
         [C.CochainP0],
         C.CochainP1,
         name="flat_lin_leftP0",
     )
-    pset.addPrimitive(
-        flat_primitive_lin_left_D,
-        [C.CochainD0],
-        C.CochainD1,
-        name="flat_lin_leftD0",
-    )
+    # pset.addPrimitive(
+    #     flat_primitive_lin_left_D,
+    #     [C.CochainD0],
+    #     C.CochainD1,
+    #     name="flat_lin_leftD0",
+    # )
     pset.addPrimitive(
         flat_primitive_lin_right_P,
         [C.CochainP0],
         C.CochainP1,
         name="flat_lin_rightP0",
     )
-    pset.addPrimitive(
-        flat_primitive_lin_right_D,
-        [C.CochainD0],
-        C.CochainD1,
-        name="flat_lin_rightD0",
-    )
+    # pset.addPrimitive(
+    #     flat_primitive_lin_right_D,
+    #     [C.CochainD0],
+    #     C.CochainD1,
+    #     name="flat_lin_rightD0",
+    # )
