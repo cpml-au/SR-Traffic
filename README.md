@@ -158,6 +158,40 @@ US101/reconstruction, so it should not be used unchanged with the default
 I80/prediction settings. The stored I80/prediction IDM vector is
 `[0.43936351, 0.93094344, 0.16251414, 0.61353022]`.
 
+### SR model score
+
+The data error used to evaluate an SR model is the average of the relative
+squared density and velocity errors:
+
+```text
+E_rho  = 100 * sum((rho_computed - rho_data)^2) / sum(rho_data^2)
+E_v    = 100 * sum((v_computed - v_data)^2) / sum(v_data^2)
+E_data = 0.5 * (E_rho + E_v).
+```
+
+Lower values are better. The factors of `100` express the two relative squared
+errors as percentages. This quantity is a relative squared error, not a mean
+squared error: the squared residuals are normalized by the squared norm of the
+observations rather than by the number of observations. Although the simulated
+flow is also computed, it is not included in `E_data`.
+
+During the symbolic-regression search, the expression-tree length penalty from
+`gp.penalty.reg_param` is added to the data error:
+
+```text
+E_fitness = E_data + reg_param * number_of_tree_nodes.
+```
+
+The default `reg_param` is `0.01`. The search minimizes `E_fitness`, thereby
+trading off agreement with the observed density and velocity against symbolic
+expression complexity. A candidate receives a data error of `100` if it fails
+the velocity feasibility check, which requires velocity to be non-increasing
+with density. Invalid expressions and expressions rejected by the tree checks
+are penalized similarly.
+
+The final test error printed after the search is `E_data` alone; it does not
+include the expression-length penalty.
+
 ## Citing
 
 ```
@@ -168,3 +202,7 @@ I80/prediction settings. The stored I80/prediction IDM vector is
   year={2025}
 }
 ```
+
+## Acknowledgements
+
+This work is supported by the European Union (European Research Council (ERC), ALPS, 101039481). Views and opinions expressed are however those of the author(s) only and do not necessarily reflect those of the European Union or the ERC Executive Agency. Neither the European Union nor the granting authority can be held responsible for them.

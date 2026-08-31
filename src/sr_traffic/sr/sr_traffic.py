@@ -21,6 +21,7 @@ import time
 import gc
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
+import argparse
 
 warnings.filterwarnings("ignore")
 
@@ -60,7 +61,7 @@ class Tee:
         return self.streams[0].encoding
 
 
-def eval_MSE_sol(
+def eval_relative_squared_error(
     func: Callable,
     consts: List,
     X: npt.NDArray,
@@ -100,7 +101,7 @@ def eval_MSE_sol(
     return total_err, rho_v_dict
 
 
-def eval_MSE_and_tune_constants(
+def eval_relative_squared_error_and_tune_constants(
     tree: gp.PrimitiveTree,
     toolbox: Toolbox,
     X: npt.NDArray,
@@ -205,7 +206,7 @@ def score(
 
     for i, individual in enumerate(individuals_batch):
         callable, _ = util.compile_individual_with_consts(individual, toolbox)
-        objvals[i], _ = eval_MSE_sol(
+        objvals[i], _ = eval_relative_squared_error(
             callable,
             individual.consts,
             X,
@@ -219,7 +220,7 @@ def score(
             ansatz,
             task,
         )
-        # we want to maximize the score -> negative MSE
+        # we want to maximize the score -> negative relative squared error
         objvals[i] *= -1.0
 
     return objvals
@@ -246,7 +247,7 @@ def predict(
     best_sols = [None] * len(individuals_batch)
     for i, individual in enumerate(individuals_batch):
         callable, _ = util.compile_individual_with_consts(individual, toolbox)
-        _, best_sols[i] = eval_MSE_sol(
+        _, best_sols[i] = eval_relative_squared_error(
             callable,
             individual.consts,
             X,
@@ -285,10 +286,10 @@ def fitness(
 
     for i, individual in enumerate(individuals_batch):
         if detect_nested_functions(str(individual)) or len(individual) > 50:
-            MSE = 100.0
+            data_error = 100.0
             consts = []
         else:
-            MSE, consts = eval_MSE_and_tune_constants(
+            data_error, consts = eval_relative_squared_error_and_tune_constants(
                 individual,
                 toolbox,
                 X,
@@ -305,7 +306,7 @@ def fitness(
                 v_check_fn,
             )
 
-        fitness = (MSE + penalty["reg_param"] * len(individual),)
+        fitness = (data_error + penalty["reg_param"] * len(individual),)
         attributes.append({"consts": consts, "fitness": fitness})
 
     gc.collect()
@@ -423,24 +424,32 @@ def sr_traffic(
             f,
             t_sampled_circ,
             step,
+            task,
             output_path,
         )
 
         # test error
-        test_mse = -gpsr.score(X_test)
-        print("Best MSE on the test set:", test_mse)
+        test_error = -gpsr.score(X_test)
+        print("Best relative squared error on the test set:", test_error)
 
     best_ind = gpsr.get_best_individuals()[0]
     best_consts = best_ind.consts
 
-    print("Best constants = ", [f"{f:.20f}" for f in best_consts])
+    print("Best constants =", [float(value) for value in best_consts])
 
     print(f"Elapsed time: {round(time.perf_counter() - start, 2)}")
 
 
 if __name__ == "__main__":
-    yamlfile = "sr_traffic.yaml"
-    filename = os.path.join(os.path.dirname(__file__), yamlfile)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=os.path.join(os.path.dirname(__file__), "sr_traffic.yaml"),
+        help="Path to the SR-Traffic YAML configuration file.",
+    )
+    args = parser.parse_args()
+    filename = os.path.abspath(args.config)
 
     regressor_params, config_file_data = util.load_config_data(filename)
     road_name = config_file_data["gp"]["road_name"]
@@ -468,7 +477,8 @@ if __name__ == "__main__":
     repository_root = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "..", "..")
     )
-    output_path = os.path.join(repository_root, "results", road_name, task, "sr")
+    output_dir = config_file_data["gp"].get("output_dir", "sr")
+    output_path = os.path.join(repository_root, "results", road_name, task, output_dir)
     os.makedirs(output_path, exist_ok=True)
 
     dt = data_info["delta_t_refined"]
@@ -479,6 +489,7 @@ if __name__ == "__main__":
             Tee(sys.stderr, log_file)
         ):
             try:
+                print(f"Configuration: {filename}")
                 sr_traffic(
                     regressor_params,
                     config_file_data,

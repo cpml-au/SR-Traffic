@@ -305,6 +305,7 @@ def sr_traffic_plots(
     f: npt.NDArray,
     t_sampled_circ: npt.NDArray,
     step: int,
+    task: str,
     output_path: str,
 ):
     x_sampled = S.node_coords
@@ -362,7 +363,32 @@ def sr_traffic_plots(
 
     error_tts = np.abs((tts - tts_data) / tts_data)
 
-    print(rho_error, v_error, f_error, error_tts)
+    print(
+        "Full-field relative errors:"
+        f" rho={float(rho_error)}, v={float(v_error)},"
+        f" flow={float(f_error)}, TTS={float(error_tts)}"
+    )
+
+    if task == "prediction":
+        test_idx = np.unique(test_data[:, 0].astype(np.int64))
+        train_idx = np.setdiff1d(np.arange(density.shape[1]), test_idx)
+
+        def relative_root_squared_error(true, computed, indices):
+            return jnp.sqrt(
+                jnp.sum((true[:, indices] - computed[:, indices]) ** 2)
+            ) / jnp.sqrt(jnp.sum(true[:, indices] ** 2))
+
+        rho_train_error = relative_root_squared_error(density, rho_comp, train_idx)
+        v_train_error = relative_root_squared_error(v, v_comp, train_idx)
+        rho_test_error = relative_root_squared_error(density, rho_comp, test_idx)
+        v_test_error = relative_root_squared_error(v, v_comp, test_idx)
+        print(
+            "Prediction rRMSEs:"
+            f" rho_train={float(rho_train_error)},"
+            f" v_train={float(v_train_error)},"
+            f" rho_test={float(rho_test_error)},"
+            f" v_test={float(v_test_error)}"
+        )
 
     plt.scatter(
         density_data[1:-3, 1:].flatten(),
