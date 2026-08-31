@@ -52,6 +52,9 @@ python src/sr_traffic/sr/sr_traffic.py
 ```
 
 You can change the parameters of the algorithm by modifying `sr_traffic.yaml`.
+The provided defaults use a seeded evolution with one individual and one
+generation. This is intended as a quick smoke test of the implementation, not
+as a search for a new model.
 
 ## Citing
 
