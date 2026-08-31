@@ -26,18 +26,20 @@ To reproduce the paper's figures and error tables using the precomputed model
 parameters, run
 
 ```bash
-$ python src/sr_traffic/fund_diagrams/fund_diagrams_results.py --road_name {road_name} --task {task_name}
+$ python src/sr_traffic/fd/fund_diagrams_results.py --road_name {road_name} --task {task_name}
 ```
 
 where `{road_name}` is either `US101` or `US80`, and `{task_name}` is either
 `prediction` or `reconstruction`. This script does not perform parameter
 calibration or symbolic-regression search: it reruns the traffic simulations
-with fixed parameters, evaluates the models, and plots the results.
+with fixed parameters, evaluates the models, and writes the figures under
+`results/<road_name>/<task_name>/`. Error tables are printed as LaTeX to
+standard output.
 
 To re-calibrate a given fundamental diagram, run
 
 ```bash
-$ python src/sr_traffic/fund_diagrams/fund_diagrams_calibration.py  --config src/sr_traffic/fund_diagrams/configs/{fnd_name}.yaml
+$ python src/sr_traffic/fd/fund_diagrams_calibration.py --config src/sr_traffic/fd/configs/{fnd_name}.yaml
 ```
 
 where`{fnd_name}` is either `greenshields`, `triangular`, `Weidmann`, `del_castillo`, or `idm`.
@@ -45,10 +47,10 @@ where`{fnd_name}` is either `greenshields`, `triangular`, `Weidmann`, `del_casti
 Finally, to perform a run of SR-Traffic, run
 
 ```bash
-$ python src/sr_traffic/learning/stgp_traffic.py
+$ python src/sr_traffic/sr/sr_traffic.py
 ```
 
-You can change the parameters of the algorithm modifying `stgp_traffic.yaml`.
+You can change the parameters of the algorithm by modifying `sr_traffic.yaml`.
 
 ## Citing
 

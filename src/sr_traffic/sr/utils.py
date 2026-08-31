@@ -17,7 +17,7 @@ import numpy.typing as npt
 
 def resolve_function(full_name: str):
     # helper to resolve function from string
-    module = importlib.import_module("sr_traffic.fund_diagrams.fund_diagrams_def")
+    module = importlib.import_module("sr_traffic.fd.fund_diagrams_def")
     return getattr(module, full_name)
 
 
@@ -295,7 +295,7 @@ def custom_logger(best_individuals: List[gp.PrimitiveTree]):
         print(f"The constants of the best individual are: {ind.consts}", flush=True)
 
 
-def stgp_traffic_plots(
+def sr_traffic_plots(
     gpsr: GPSymbolicRegressor,
     S: SimplicialComplex,
     flats: Dict,

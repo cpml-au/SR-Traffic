@@ -49,3 +49,4 @@ venv.bak/
 *.png
 *.npy
 *.txt
+results/

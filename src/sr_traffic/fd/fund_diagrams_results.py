@@ -5,9 +5,9 @@ from dctkit.dec import cochain as C
 from dctkit.dec.flat import flat
 from dctkit import config
 from sr_traffic.data.data import preprocess_data, build_dataset
-from sr_traffic.fund_diagrams import fund_diagrams_def as tf_utils
+from sr_traffic.fd import fund_diagrams_def as tf_utils
 from sr_traffic.utils import flat as tf_flat
-from sr_traffic.learning.primitives import *
+from sr_traffic.sr.primitives import *
 from sr_traffic.utils.godunov import godunov_solver
 from functools import partial
 import matplotlib.pyplot as plt
@@ -16,8 +16,11 @@ import matplotlib.patches as patches
 import numpy.typing as npt
 from typing import Dict, List, Callable
 import argparse
+from pathlib import Path
 
 config()
+
+RESULTS_ROOT = Path(__file__).resolve().parents[3] / "results"
 
 
 def sr_term(rho: npt.NDArray, flats: Dict, params: List, task: str):
@@ -206,7 +209,11 @@ def plot_diagrams(
         markerscale=3,
     )
     plt.tight_layout()
-    plt.savefig(f"{name_diagram}_{test_name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(
+        RESULTS_DIR / f"{name_diagram}_{test_name}.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
     plt.clf()
 
 
@@ -368,7 +375,11 @@ def rho_v_plot(
         axes[-1, j].set_xticks(x_ticks)
 
     # plt.tight_layout(rect=[0, 0, 0.85, 0.95])
-    plt.savefig(f"rho_v_f_plot_{test_name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(
+        RESULTS_DIR / f"rho_v_f_plot_{test_name}.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
     plt.clf()
 
 
@@ -399,7 +410,11 @@ def predicted_true_plots(results: Dict, v: npt.NDArray, f: npt.NDArray, test_nam
         # axes[i].set_xlim(0, 25)
         # axes[i].set_ylim(0, 25)
     plt.tight_layout()
-    plt.savefig(f"pred_actual_flux_{test_name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(
+        RESULTS_DIR / f"pred_actual_flux_{test_name}.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
     plt.clf()
 
     fig_dim = (3 * num_models, num_models)
@@ -426,7 +441,11 @@ def predicted_true_plots(results: Dict, v: npt.NDArray, f: npt.NDArray, test_nam
         # axes[i].set_xlim(0, 25)
         # axes[i].set_ylim(0, 25)
     plt.tight_layout()
-    plt.savefig(f"pred_actual_velocity_{test_name}.png", dpi=300, bbox_inches="tight")
+    plt.savefig(
+        RESULTS_DIR / f"pred_actual_velocity_{test_name}.png",
+        dpi=300,
+        bbox_inches="tight",
+    )
     plt.clf()
 
 
@@ -525,6 +544,8 @@ args = parser.parse_args()
 road_name = args.road_name
 task = args.task
 test_name = f"{road_name}_{task}"
+RESULTS_DIR = RESULTS_ROOT / road_name / task
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 data_info = preprocess_data(road_name)
 _, _, X_training, X_test = build_dataset(

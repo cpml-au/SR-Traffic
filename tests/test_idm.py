@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from jax import jit
-from sr_traffic.fund_diagrams.fund_diagrams_def import inverse_IDM, IDM_fn
+from sr_traffic.fd.fund_diagrams_def import inverse_IDM, IDM_fn
 
 
 def test_idm():

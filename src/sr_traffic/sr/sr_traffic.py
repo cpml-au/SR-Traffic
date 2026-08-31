@@ -6,7 +6,7 @@ import numpy.typing as npt
 from jax import jit
 import jax.numpy as jnp
 import sr_traffic.utils.flat as tf_flat
-from sr_traffic.learning.primitives import add_new_primitives
+from sr_traffic.sr.primitives import add_new_primitives
 from sr_traffic.data.data import preprocess_data, build_dataset
 from flex.gp import util, primitives
 from flex.gp.regressor import GPSymbolicRegressor
@@ -14,7 +14,7 @@ from deap import gp
 from deap.base import Toolbox
 import warnings
 import pygmo as pg
-from sr_traffic.learning.utils import *
+from sr_traffic.sr.utils import *
 import os
 import time
 import gc
@@ -283,7 +283,7 @@ def fitness(
     return attributes
 
 
-def stgp_traffic(
+def sr_traffic(
     regressor_params: Dict,
     config_file_data: Dict,
     density: npt.NDArray,
@@ -384,7 +384,7 @@ def stgp_traffic(
         gpsr.fit(X_train_val)
 
         # PLOTS
-        stgp_traffic_plots(
+        sr_traffic_plots(
             gpsr,
             S,
             flats,
@@ -409,7 +409,7 @@ def stgp_traffic(
 
 
 if __name__ == "__main__":
-    yamlfile = "stgp_traffic.yaml"
+    yamlfile = "sr_traffic.yaml"
     filename = os.path.join(os.path.dirname(__file__), yamlfile)
 
     regressor_params, config_file_data = util.load_config_data(filename)
@@ -439,7 +439,7 @@ if __name__ == "__main__":
 
     dt = data_info["delta_t_refined"]
 
-    stgp_traffic(
+    sr_traffic(
         regressor_params,
         config_file_data,
         data_info["density"],
