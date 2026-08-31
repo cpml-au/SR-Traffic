@@ -1,4 +1,4 @@
-road_name: US80
+road_name: I80
 task: prediction
 flux: Greenshields_flux
 bounds: [[0.0, 0.0], [1.0, 1.3]]

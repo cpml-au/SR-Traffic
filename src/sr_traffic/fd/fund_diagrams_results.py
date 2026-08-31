@@ -264,7 +264,7 @@ def rho_v_plot(
         rect_test = [rect_0_test, rect_1_test]
     elif task == "reconstruction":
         # x_idx = x_sampled_circ[train_idx][:-4]
-        if road_name == "US80":
+        if road_name == "I80":
             x_idx = [
                 50.0,
                 310.0,
@@ -455,8 +455,18 @@ def format_entry(val: float, rank: float, is_best: bool):
     return f"\\textbf{{{formatted}}}" if is_best else formatted
 
 
-def fill_error_table(
-    results: Dict, train_idx: npt.NDArray, test_idx: npt.NDArray, task: str
+def format_markdown_entry(val: float, rank: float, is_best: bool):
+    formatted = f"{val:.3f} ({rank})"
+    return f"**{formatted}**" if is_best else formatted
+
+
+def save_error_tables(
+    results: Dict,
+    train_idx: npt.NDArray,
+    test_idx: npt.NDArray,
+    road_name: str,
+    task: str,
+    output_path: Path,
 ):
     t_errors = []
     if task == "prediction":
@@ -499,8 +509,9 @@ def fill_error_table(
     avg_ranks = np.mean(ranks, axis=1)
 
     latex_rows = []
+    markdown_rows = []
     for i, (name, e_rho_train, e_v_train, e_rho_test, e_v_test) in enumerate(t_errors):
-        row = [
+        latex_row = [
             name,
             format_entry(e_rho_train, ranks[i, 0], ranks[i, 0] == 1),
             format_entry(e_v_train, ranks[i, 1], ranks[i, 1] == 1),
@@ -512,11 +523,33 @@ def fill_error_table(
                 else f"{avg_ranks[i]:.2f}"
             ),
         ]
-        latex_rows.append(row)
+        markdown_row = [
+            name,
+            format_markdown_entry(e_rho_train, ranks[i, 0], ranks[i, 0] == 1),
+            format_markdown_entry(e_v_train, ranks[i, 1], ranks[i, 1] == 1),
+            format_markdown_entry(e_rho_test, ranks[i, 2], ranks[i, 2] == 1),
+            format_markdown_entry(e_v_test, ranks[i, 3], ranks[i, 3] == 1),
+            (
+                f"**{avg_ranks[i]:.2f}**"
+                if avg_ranks[i] == min(avg_ranks)
+                else f"{avg_ranks[i]:.2f}"
+            ),
+        ]
+        latex_rows.append(latex_row)
+        markdown_rows.append(markdown_row)
+
+    caption = (
+        "Relative errors between the actual and the computed density and velocity "
+        f"(training and test) for the {task} task. In bold, the best-performing "
+        "models for each metric considered."
+    )
+    label = f"tab:errors_{road_name.lower()}_{task}"
 
     table = (
         r"""\begin{table}[H]
-        \caption{Relative errors between the actual and the computed density and velocity (training and test) for the prediction task. In bold, the best-performing models for each metric considered.}
+        \caption{"""
+        + caption
+        + r"""}
         \begin{center}
             \begin{tabular}{c c c c c c}
                 \toprule
@@ -528,11 +561,27 @@ def fill_error_table(
                 \bottomrule
             \end{tabular}
         \end{center}
-        \label{tab:errors_i80_pred}
-    \end{table}"""
+        \label{"""
+        + label
+        + r"""}
+    \end{table}
+"""
     )
 
-    print(table)
+    output_path.write_text(table, encoding="utf-8")
+    markdown_table = "\n".join(
+        [
+            f"## Relative errors — {road_name} {task}",
+            "",
+            caption,
+            "",
+            "| Model | $E^{\\mathrm{tr}}_\\rho$ | $E^{\\mathrm{tr}}_v$ | $E^{\\mathrm{ts}}_\\rho$ | $E^{\\mathrm{ts}}_v$ | Avg Rank |",
+            "|---|---:|---:|---:|---:|---:|",
+            *["| " + " | ".join(row) + " |" for row in markdown_rows],
+            "",
+        ]
+    )
+    output_path.with_suffix(".md").write_text(markdown_table, encoding="utf-8")
 
 
 parser = argparse.ArgumentParser()
@@ -627,7 +676,7 @@ if road_name == "US101":
 
     x_ticks = [0, 1350, 2700]
     y_ticks = [10, 990, 1970]
-elif road_name == "US80":
+elif road_name == "I80":
     if task == "prediction":
         opt_greenshields = [0.54673127, 0.55995123]
         opt_Weidmann = [0.63190729, 0.80612097, 0.24947817]
@@ -813,7 +862,13 @@ predicted_true_plots(results, v, f, test_name)
 predicted_true_plots(sr_results, v, f, test_name + "_sr")
 
 
-# Table computation
+# Save the error tables
 results = results | sr_results
-fill_error_table(results, train_idx, test_idx, task)
-# fill_error_table(sr_results, train_idx, test_idx, task)
+save_error_tables(
+    results,
+    train_idx,
+    test_idx,
+    road_name,
+    task,
+    RESULTS_DIR / "error_table.tex",
+)

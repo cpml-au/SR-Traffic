@@ -31,7 +31,7 @@ def preprocess_data(road_name: str):
         t_max_dim = 45 * 60
         delta_t_factor = 0.025
 
-    elif road_name == "US80":
+    elif road_name == "I80":
         v_int_path = os.path.join(road_path, f"NGSIM_{road_name}_4pm_Velocity_Data.txt")
         density_int_path = os.path.join(
             road_path, f"NGSIM_{road_name}_4pm_Density_Data.txt"
