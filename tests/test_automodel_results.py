@@ -1,5 +1,6 @@
 import numpy as np
 
+from sr_traffic.fd import automodel_results
 from sr_traffic.fd.automodel_registry import I80_PREDICTION_DIAGRAMS
 from sr_traffic.fd.automodel_results import compute_errors, parse_args
 
@@ -40,3 +41,23 @@ def test_cli_defaults_to_the_frozen_benchmark():
     assert args.road_name == "I80"
     assert args.task == "prediction"
     assert not args.tables_only
+
+
+def test_automodel_report_excludes_published_sr_models(monkeypatch):
+    monkeypatch.setattr(
+        automodel_results.diagrams,
+        "define_flux_der",
+        lambda _complex, flux: flux,
+    )
+
+    models, plot_names, corrected_names = automodel_results.make_model_functions(
+        object(), {}
+    )
+
+    expected_names = []
+    for diagram in I80_PREDICTION_DIAGRAMS:
+        expected_names.extend((diagram.name, f"Automodel-{diagram.name}"))
+    assert list(models) == expected_names
+    assert plot_names == expected_names
+    assert corrected_names == expected_names[1::2]
+    assert all(not name.startswith("SR-") for name in models)

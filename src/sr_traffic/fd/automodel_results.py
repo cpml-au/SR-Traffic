@@ -1,10 +1,9 @@
 """Plot and tabulate the frozen Automodel fundamental diagrams.
 
-The outputs mirror ``sr_traffic.fd.results``.  Tables compare each calibrated
-basic fundamental diagram with both its published SR correction and its
-Automodel-selected correction; plots compare the baselines and Automodel
-variants.  Automodel selection is currently available only for the
-I80/prediction benchmark.
+The outputs mirror ``sr_traffic.fd.results``.  Tables and plots compare each
+calibrated basic fundamental diagram with its Automodel-selected correction.
+Automodel selection is currently available only for the I80/prediction
+benchmark.
 """
 
 from __future__ import annotations
@@ -160,7 +159,7 @@ def simulate_model(
 def make_model_functions(
     complex_: SimplicialComplex, flats: Mapping
 ) -> tuple[dict[str, tuple[Callable, Callable]], list[str], list[str]]:
-    """Create baseline, published-SR, and Automodel fluxes in display order."""
+    """Create baseline and Automodel fluxes in paired display order."""
 
     models = {}
     plot_names = []
@@ -180,29 +179,10 @@ def make_model_functions(
                 diagram.correction_coefficients,
             )
 
-        def paper_sr_flux(rho, diagram=diagram):
-            inner_slope, kernel_slope = diagram.paper_correction_coefficients
-            ones = C.Cochain(
-                rho.dim,
-                rho.is_primal,
-                rho.complex,
-                jnp.ones_like(rho.coeffs),
-            )
-            gradient = C.codifferential(
-                flats["linear_left_P"](C.exp(C.scalar_mul(rho, inner_slope)))
-            )
-            kernel = C.exp(C.scalar_mul(rho, kernel_slope))
-            multiplier = C.add(ones, C.convolution(gradient, kernel, 1))
-            baseline = diagram.baseline_flux(rho, *diagram.baseline_coefficients)
-            return C.cochain_mul(baseline, multiplier)
-
         baseline_derivative = diagrams.define_flux_der(complex_, baseline_flux)
-        paper_sr_derivative = diagrams.define_flux_der(complex_, paper_sr_flux)
         corrected_derivative = diagrams.define_flux_der(complex_, corrected_flux)
-        paper_sr_name = f"SR-{diagram.name}"
         corrected_name = f"Automodel-{diagram.name}"
         models[diagram.name] = (baseline_flux, baseline_derivative)
-        models[paper_sr_name] = (paper_sr_flux, paper_sr_derivative)
         models[corrected_name] = (corrected_flux, corrected_derivative)
         plot_names.extend((diagram.name, corrected_name))
         corrected_names.append(corrected_name)
@@ -331,8 +311,8 @@ def save_error_tables(
     caption = (
         "Relative errors between the actual and the computed density and velocity "
         "(training and test) for the prediction task, including the calibrated "
-        "baselines, published SR models, and Automodel variants. In bold, the "
-        "best-performing models for each metric considered."
+        "baselines and Automodel variants. In bold, the best-performing models "
+        "for each metric considered."
     )
     latex_table = (
         r"""\begin{table}[H]
@@ -356,7 +336,7 @@ def save_error_tables(
     )
     markdown_table = "\n".join(
         [
-            "## Relative errors — I80 prediction: baseline, SR, and Automodel",
+            "## Relative errors — I80 prediction: baseline and Automodel",
             "",
             caption,
             "",

@@ -242,9 +242,10 @@ triangular correction improves the previous SR test score from 8.074263 to
 > best qualitative traffic dynamics. Future evaluations should supplement the
 > paper metrics with interior-only rRMSE, density/velocity correlation, spatial-
 > and temporal-gradient rRMSE, flow rRMSE, and a structural image metric such as
-> SSIM. The generated comparison table already addresses one earlier limitation
-> by ranking all calibrated baselines, published SR models, and Automodel models
-> together.
+> SSIM. The generated Automodel table ranks each corrected model against the
+> same five calibrated baselines. The separate corrected-model table below
+> makes the comparison with the published SR models explicit without mixing SR
+> rows into the Automodel output table.
 
 > [!WARNING]
 > **Automodel-Greenshields is not physically admissible over the full normalized
@@ -259,6 +260,28 @@ triangular correction improves the previous SR test score from 8.074263 to
 > covers the modeled domain, positivity on nonuniform states, and optionally flux
 > concavity; refitting under those constraints would require a fresh external
 > validation check.
+
+### Comparison with the published SR models
+
+The following table reports the published SR corrections and frozen Automodel
+corrections together using the four paper metrics. Values are uncentered rRMSE;
+lower is better, and parenthesized ranks are computed only across these ten
+corrected models. This table is kept separate from the generated Automodel error
+table, whose comparison set is the five calibrated baselines and five Automodel
+variants.
+
+| Model | $E^{\mathrm{tr}}_\rho$ | $E^{\mathrm{tr}}_v$ | $E^{\mathrm{ts}}_\rho$ | $E^{\mathrm{ts}}_v$ | Avg Rank |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| SR-Greenshields | 0.296 (10) | 0.234 (4) | 0.287 (10) | 0.285 (10) | 8.50 |
+| Automodel-Greenshields | 0.252 (7) | 0.233 (3) | 0.239 (3) | **0.244 (1)** | 3.50 |
+| SR-IDM | **0.244 (1)** | 0.257 (7) | 0.247 (6) | 0.259 (4) | 4.50 |
+| Automodel-IDM | 0.253 (8) | 0.258 (8) | 0.254 (9) | 0.256 (2) | 6.75 |
+| SR-Weidmann | 0.249 (3) | **0.226 (1)** | 0.250 (8) | 0.261 (5) | 4.25 |
+| Automodel-Weidmann | 0.246 (2) | 0.238 (6) | 0.238 (2) | 0.266 (6) | **4.00** |
+| SR-Triangular | 0.251 (6) | 0.272 (9) | 0.248 (7) | 0.258 (3) | 6.25 |
+| Automodel-Triangular | 0.253 (9) | 0.277 (10) | 0.241 (5) | 0.267 (7) | 7.75 |
+| SR-Del Castillo | 0.251 (5) | 0.230 (2) | 0.240 (4) | 0.268 (8) | 4.75 |
+| Automodel-Del Castillo | 0.250 (4) | 0.238 (5) | **0.235 (1)** | 0.273 (9) | 4.75 |
 
 ### Stored artifacts and reproduction
 
@@ -281,22 +304,21 @@ run
 python -m automodel.finalize
 ```
 
-To generate paper-style plots and a joint comparison table containing every
-baseline FD, its published SR model, and its frozen Automodel-corrected variant,
-run
+To generate paper-style plots and a paired comparison table containing every
+baseline FD and its frozen Automodel-corrected variant, run
 
 ```bash
 python src/sr_traffic/fd/automodel_results.py --road_name I80 --task prediction
 ```
 
-The command writes ten plots, a 15-row `error_table.tex`/`error_table.md`, and
+The command writes ten plots, a 10-row `error_table.tex`/`error_table.md`, and
 the raw `metrics.json` values under `results/I80/prediction/automodel/`. The
-table jointly ranks the five baselines, five published SR models, and five
-Automodel variants using the same four metrics as `fd/results.py`: training/test
-density and velocity rRMSE plus average rank. Use `--tables-only` to skip plot
-rendering. The search covers the five diagrams with calibration configs and
-stored I80 coefficients; Greenberg and Underwood are not included in this
-benchmark.
+table jointly ranks the five baselines and five Automodel variants using the
+same four metrics as `fd/results.py`: training/test density and velocity rRMSE
+plus average rank. Published SR results are intentionally omitted from that
+table and reported separately above. Use `--tables-only` to skip plot rendering.
+The search covers the five diagrams with calibration configs and stored I80
+coefficients; Greenberg and Underwood are not included in this benchmark.
 
 ## Citing
 
