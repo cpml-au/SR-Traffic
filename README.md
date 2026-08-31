@@ -22,13 +22,17 @@ $ pip install -e .
 
 ## Usage
 
-To reproduce the results of the paper just run
+To reproduce the paper's figures and error tables using the precomputed model
+parameters, run
 
 ```bash
 $ python src/sr_traffic/fund_diagrams/fund_diagrams_results.py --road_name {road_name} --task {task_name}
 ```
 
-where `{road_name}` is either `US101` or `US80`, and `{road_name}` is either `prediction` or `reconstruction`.
+where `{road_name}` is either `US101` or `US80`, and `{task_name}` is either
+`prediction` or `reconstruction`. This script does not perform parameter
+calibration or symbolic-regression search: it reruns the traffic simulations
+with fixed parameters, evaluates the models, and plots the results.
 
 To re-calibrate a given fundamental diagram, run
 
