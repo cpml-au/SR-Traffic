@@ -1,0 +1,22 @@
+{
+  "baseline": "del_castillo",
+  "correction": "identity",
+  "expression": "1",
+  "params": [],
+  "n_params": 0,
+  "tree_nodes": 1,
+  "training_fitness": 6.882578062937073,
+  "optimizer_objective": 6.872578062937067,
+  "train": {
+    "data_error": 6.872578062937073,
+    "rho_rrmse": 0.26740810259085507,
+    "velocity_rrmse": 0.2567965496798978,
+    "flow_rrmse": 0.2573221988185957
+  },
+  "test": null,
+  "converged": true,
+  "optimizer_message": "parameters supplied",
+  "seed": 0,
+  "runtime_seconds": 2.5201449029991636,
+  "peak_memory_mb": 687.19140625
+}

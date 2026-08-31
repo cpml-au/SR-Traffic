@@ -1,0 +1,23 @@
+{
+  "baseline": "idm",
+  "model": "meta_1/agent_2/attempt_2/model.py",
+  "correction": "downwind_window3",
+  "expression": "1 + (delta flat_downwind/right exp(c1*rho)) *_3 exp(c2*rho)",
+  "params": [
+    -10.0,
+    -10.0
+  ],
+  "tree_nodes": 15,
+  "optimizer_objective": 7.070317321727018,
+  "training_fitness": 7.220317321727025,
+  "train": {
+    "data_error": 7.070317321727025,
+    "rho_rrmse": 0.260274369499125,
+    "velocity_rrmse": 0.27141038855646893,
+    "flow_rrmse": 0.20532871019274032
+  },
+  "feasible": true,
+  "test_evaluated": false,
+  "runtime_seconds": 6.381859214998258,
+  "peak_memory_mb": 1196.8671875
+}

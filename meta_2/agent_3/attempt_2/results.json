@@ -1,0 +1,350 @@
+{
+  "attempt": "attempt_2",
+  "correction": "local_exponential_downwind_window3",
+  "expression": "exp(c0*rho) + ((delta flat_right_P exp(c1*rho)) *_3 exp(c2*rho))",
+  "default_params": [
+    0.0,
+    0.0,
+    8.0
+  ],
+  "bounds": [
+    [
+      -0.5,
+      0.5
+    ],
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ]
+  ],
+  "n_params": 3,
+  "tree_nodes": 18,
+  "selection_split": "train_first_60_percent",
+  "test_evaluated": false,
+  "optimizer": {
+    "method": "I80PredictionProblem.fit (differential_evolution + bounded Nelder-Mead)",
+    "seed": 2302,
+    "maxiter": 2,
+    "popsize": 3,
+    "polish_maxiter": 10
+  },
+  "meta1_winner": {
+    "source": "meta_1/agent_2/attempt_2",
+    "expression": "1 + (delta flat_right_P exp(c1*rho)) *_3 exp(c2*rho)",
+    "tree_nodes": 15,
+    "mean_training_fitness": 6.940512868047766
+  },
+  "meta2_attempt1": {
+    "source": "meta_2/agent_3/attempt_1",
+    "expression": "exp(a * ((delta flat_right_P exp(b*rho)) *_3 exp(c*rho)))",
+    "tree_nodes": 16,
+    "mean_training_fitness": 7.2429660686943205
+  },
+  "mean_E_data": 7.012253836433331,
+  "mean_training_fitness": 7.192253836433331,
+  "mean_fitness_change_vs_meta1_winner": 0.2517409683855645,
+  "mean_fitness_change_vs_meta2_attempt1": -0.05071223226098942,
+  "all_default_feasible": true,
+  "all_finite": true,
+  "all_feasible": true,
+  "all_in_bounds": true,
+  "all_eligible": true,
+  "total_runtime_seconds": 203.37661996099996,
+  "peak_rss_mb_estimate": 1528.91015625,
+  "baselines": {
+    "greenshields": {
+      "baseline": "greenshields",
+      "baseline_label": "Greenshields",
+      "params": [
+        0.5,
+        -5.957330755601453,
+        -10.0
+      ],
+      "n_params": 3,
+      "bounds": [
+        [
+          -0.5,
+          0.5
+        ],
+        [
+          -10.0,
+          10.0
+        ],
+        [
+          -10.0,
+          10.0
+        ]
+      ],
+      "E_data": 6.2390238713093495,
+      "training_fitness": 6.419023871309349,
+      "meta1_winner_training_fitness": 7.004364522852866,
+      "fitness_change_vs_meta1_winner": -0.5853406515435164,
+      "meta2_attempt1_training_fitness": 6.938902613002732,
+      "fitness_change_vs_meta2_attempt1": -0.519878741693383,
+      "optimizer_objective": 6.239023871309343,
+      "train": {
+        "data_error": 6.2390238713093495,
+        "rho_rrmse": 0.25687892644268967,
+        "velocity_rrmse": 0.24247411114557824,
+        "flow_rrmse": 0.2069119992185694
+      },
+      "split_evaluated": "train",
+      "test": null,
+      "default_params": [
+        0.0,
+        0.0,
+        8.0
+      ],
+      "default_feasible": true,
+      "default_objective": 8.210503067133637,
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "finite": true,
+      "feasible": true,
+      "in_bounds": true,
+      "eligible": true,
+      "seed": 2302,
+      "maxiter": 2,
+      "popsize": 3,
+      "polish_maxiter": 10,
+      "runtime_seconds": 33.65483130799839,
+      "peak_rss_mb_estimate": 1206.5859375
+    },
+    "weidmann": {
+      "baseline": "weidmann",
+      "baseline_label": "Weidmann",
+      "params": [
+        -0.0002499999999999999,
+        0.003416666666666667,
+        6.533333333333349
+      ],
+      "n_params": 3,
+      "bounds": [
+        [
+          -0.5,
+          0.5
+        ],
+        [
+          -10.0,
+          10.0
+        ],
+        [
+          -10.0,
+          10.0
+        ]
+      ],
+      "E_data": 6.909358081555781,
+      "training_fitness": 7.089358081555781,
+      "meta1_winner_training_fitness": 6.36439193255737,
+      "fitness_change_vs_meta1_winner": 0.7249661489984103,
+      "meta2_attempt1_training_fitness": 7.071252816549025,
+      "fitness_change_vs_meta2_attempt1": 0.01810526500675591,
+      "optimizer_objective": 6.909358081555774,
+      "train": {
+        "data_error": 6.909358081555781,
+        "rho_rrmse": 0.2693530120773941,
+        "velocity_rrmse": 0.25619546544767496,
+        "flow_rrmse": 0.259613139228528
+      },
+      "split_evaluated": "train",
+      "test": null,
+      "default_params": [
+        0.0,
+        0.0,
+        8.0
+      ],
+      "default_feasible": true,
+      "default_objective": 6.919011523942971,
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "finite": true,
+      "feasible": true,
+      "in_bounds": true,
+      "eligible": true,
+      "seed": 2302,
+      "maxiter": 2,
+      "popsize": 3,
+      "polish_maxiter": 10,
+      "runtime_seconds": 31.649279591998493,
+      "peak_rss_mb_estimate": 1528.91015625
+    },
+    "triangular": {
+      "baseline": "triangular",
+      "baseline_label": "Triangular",
+      "params": [
+        -0.006277777777777777,
+        0.006027777777777779,
+        7.15555555555553
+      ],
+      "n_params": 3,
+      "bounds": [
+        [
+          -0.5,
+          0.5
+        ],
+        [
+          -10.0,
+          10.0
+        ],
+        [
+          -10.0,
+          10.0
+        ]
+      ],
+      "E_data": 8.032270329075658,
+      "training_fitness": 8.212270329075658,
+      "meta1_winner_training_fitness": 7.64845982421528,
+      "fitness_change_vs_meta1_winner": 0.5638105048603776,
+      "meta2_attempt1_training_fitness": 8.217001466321395,
+      "fitness_change_vs_meta2_attempt1": -0.004731137245736372,
+      "optimizer_objective": 8.03227032907565,
+      "train": {
+        "data_error": 8.032270329075658,
+        "rho_rrmse": 0.2691978550090776,
+        "velocity_rrmse": 0.2969476745826187,
+        "flow_rrmse": 0.2526649507652734
+      },
+      "split_evaluated": "train",
+      "test": null,
+      "default_params": [
+        0.0,
+        0.0,
+        8.0
+      ],
+      "default_feasible": true,
+      "default_objective": 8.059319874999632,
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "finite": true,
+      "feasible": true,
+      "in_bounds": true,
+      "eligible": true,
+      "seed": 2302,
+      "maxiter": 2,
+      "popsize": 3,
+      "polish_maxiter": 10,
+      "runtime_seconds": 33.40562819399929,
+      "peak_rss_mb_estimate": 1528.91015625
+    },
+    "idm": {
+      "baseline": "idm",
+      "baseline_label": "IDM",
+      "params": [
+        -0.002858491339720548,
+        -7.739894331884692,
+        -10.0
+      ],
+      "n_params": 3,
+      "bounds": [
+        [
+          -0.5,
+          0.5
+        ],
+        [
+          -10.0,
+          10.0
+        ],
+        [
+          -10.0,
+          10.0
+        ]
+      ],
+      "E_data": 7.0881339808935575,
+      "training_fitness": 7.268133980893557,
+      "meta1_winner_training_fitness": 7.220317321727018,
+      "fitness_change_vs_meta1_winner": 0.04781665916653921,
+      "meta2_attempt1_training_fitness": 7.142831919163061,
+      "fitness_change_vs_meta2_attempt1": 0.1253020617304963,
+      "optimizer_objective": 7.08813398089355,
+      "train": {
+        "data_error": 7.0881339808935575,
+        "rho_rrmse": 0.260312499305597,
+        "velocity_rrmse": 0.2720295614876161,
+        "flow_rrmse": 0.20540048399936855
+      },
+      "split_evaluated": "train",
+      "test": null,
+      "default_params": [
+        0.0,
+        0.0,
+        8.0
+      ],
+      "default_feasible": true,
+      "default_objective": 7.392855633844913,
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "finite": true,
+      "feasible": true,
+      "in_bounds": true,
+      "eligible": true,
+      "seed": 2302,
+      "maxiter": 2,
+      "popsize": 3,
+      "polish_maxiter": 10,
+      "runtime_seconds": 65.89631987800021,
+      "peak_rss_mb_estimate": 1528.91015625
+    },
+    "del_castillo": {
+      "baseline": "del_castillo",
+      "baseline_label": "Del Castillo",
+      "params": [
+        -0.011000000000000003,
+        0.006583333333333333,
+        10.0
+      ],
+      "n_params": 3,
+      "bounds": [
+        [
+          -0.5,
+          0.5
+        ],
+        [
+          -10.0,
+          10.0
+        ],
+        [
+          -10.0,
+          10.0
+        ]
+      ],
+      "E_data": 6.792482919332309,
+      "training_fitness": 6.972482919332308,
+      "meta1_winner_training_fitness": 6.465030738886299,
+      "fitness_change_vs_meta1_winner": 0.507452180446009,
+      "meta2_attempt1_training_fitness": 6.844841528435391,
+      "fitness_change_vs_meta2_attempt1": 0.12764139089691717,
+      "optimizer_objective": 6.7924829193323015,
+      "train": {
+        "data_error": 6.792482919332309,
+        "rho_rrmse": 0.26479158733863206,
+        "velocity_rrmse": 0.25638852092348785,
+        "flow_rrmse": 0.25923444940316487
+      },
+      "split_evaluated": "train",
+      "test": null,
+      "default_params": [
+        0.0,
+        0.0,
+        8.0
+      ],
+      "default_feasible": true,
+      "default_objective": 6.872578062937083,
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "finite": true,
+      "feasible": true,
+      "in_bounds": true,
+      "eligible": true,
+      "seed": 2302,
+      "maxiter": 2,
+      "popsize": 3,
+      "polish_maxiter": 10,
+      "runtime_seconds": 38.76943404999838,
+      "peak_rss_mb_estimate": 1528.91015625
+    }
+  }
+}

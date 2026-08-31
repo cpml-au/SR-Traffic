@@ -1,0 +1,23 @@
+{
+  "baseline": "idm",
+  "correction": "identity",
+  "expression": "1",
+  "params": [],
+  "n_params": 0,
+  "tree_nodes": 1,
+  "training_fitness": 7.402855633844915,
+  "optimizer_objective": 7.39285563384491,
+  "train": {
+    "data_error": 7.392855633844915,
+    "rho_rrmse": 0.2572056171129728,
+    "velocity_rrmse": 0.2858362874136752,
+    "flow_rrmse": 0.20246297845911657
+  },
+  "test": null,
+  "converged": true,
+  "feasible": true,
+  "optimizer_message": "parameters supplied",
+  "seed": 0,
+  "runtime_seconds": 4.712873546999617,
+  "peak_memory_mb": 740.20703125
+}

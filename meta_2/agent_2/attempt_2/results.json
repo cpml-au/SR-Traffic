@@ -1,0 +1,182 @@
+{
+  "correction": "linear_upwind_window3",
+  "expression": "1 + a * ((delta flat_upwind/left rho) *_3 exp(b*rho))",
+  "default_params": [
+    0.0,
+    0.0
+  ],
+  "bounds": [
+    [
+      -10.0,
+      10.0
+    ],
+    [
+      -10.0,
+      10.0
+    ]
+  ],
+  "n_params": 2,
+  "tree_nodes": 14,
+  "dataset": "I80",
+  "task": "prediction",
+  "evaluated_split": "train",
+  "test_accessed": false,
+  "seed": 2202,
+  "optimizer": {
+    "global": "scipy.differential_evolution",
+    "maxiter": 2,
+    "popsize": 3,
+    "x0": [
+      0.0,
+      0.0
+    ],
+    "polish": "bounded Nelder-Mead via I80PredictionProblem.fit, maxiter=10"
+  },
+  "baselines": [
+    {
+      "baseline": "greenshields",
+      "params": [
+        -0.6524609352819928,
+        -6.717213424479311
+      ],
+      "optimizer_objective": 7.716523207488063,
+      "objective_check": 7.716523207488063,
+      "raw_evaluated_fitness": 7.85652320748807,
+      "training_fitness": 7.856523207488062,
+      "train": {
+        "data_error": 7.716523207488071,
+        "rho_rrmse": 0.2717922417937655,
+        "velocity_rrmse": 0.28365373512520636,
+        "flow_rrmse": 0.29006635572836154
+      },
+      "status": "accepted",
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "default_feasible": true,
+      "physically_feasible": true,
+      "finite_metrics": true,
+      "within_declared_bounds": true,
+      "at_parameter_bound": false,
+      "accepted": true,
+      "runtime_seconds": 21.26327287299864,
+      "peak_memory_mb": 1177.58203125
+    },
+    {
+      "baseline": "weidmann",
+      "params": [
+        0.0,
+        -4.454621715800995
+      ],
+      "optimizer_objective": 6.919011523943001,
+      "objective_check": 6.919011523943001,
+      "raw_evaluated_fitness": 7.059011523943007,
+      "training_fitness": 7.059011523943001,
+      "train": {
+        "data_error": 6.9190115239430074,
+        "rho_rrmse": 0.2696084540308545,
+        "velocity_rrmse": 0.2563035543919608,
+        "flow_rrmse": 0.2595031193398738
+      },
+      "status": "accepted",
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "default_feasible": true,
+      "physically_feasible": true,
+      "finite_metrics": true,
+      "within_declared_bounds": true,
+      "at_parameter_bound": false,
+      "accepted": true,
+      "runtime_seconds": 19.212821647000965,
+      "peak_memory_mb": 1258.26171875
+    },
+    {
+      "baseline": "triangular",
+      "params": [
+        -0.0006250000000000001,
+        -4.844401115933584
+      ],
+      "optimizer_objective": 8.0578476061766,
+      "objective_check": 8.0578476061766,
+      "raw_evaluated_fitness": 8.197847606176609,
+      "training_fitness": 8.1978476061766,
+      "train": {
+        "data_error": 8.057847606176608,
+        "rho_rrmse": 0.26981116975759883,
+        "velocity_rrmse": 0.2972522242096236,
+        "flow_rrmse": 0.2518435278650688
+      },
+      "status": "accepted",
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "default_feasible": true,
+      "physically_feasible": true,
+      "finite_metrics": true,
+      "within_declared_bounds": true,
+      "at_parameter_bound": false,
+      "accepted": true,
+      "runtime_seconds": 21.51803615099925,
+      "peak_memory_mb": 1341.1328125
+    },
+    {
+      "baseline": "idm",
+      "params": [
+        -0.020476562500000003,
+        -5.371647358077222
+      ],
+      "optimizer_objective": 7.3832282320202225,
+      "objective_check": 7.3832282320202225,
+      "raw_evaluated_fitness": 7.5232282320202275,
+      "training_fitness": 7.523228232020222,
+      "train": {
+        "data_error": 7.383228232020228,
+        "rho_rrmse": 0.25708888223677917,
+        "velocity_rrmse": 0.28560439644838814,
+        "flow_rrmse": 0.20266095316053873
+      },
+      "status": "accepted",
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "default_feasible": true,
+      "physically_feasible": true,
+      "finite_metrics": true,
+      "within_declared_bounds": true,
+      "at_parameter_bound": false,
+      "accepted": true,
+      "runtime_seconds": 49.47908605200064,
+      "peak_memory_mb": 1383.66796875
+    },
+    {
+      "baseline": "del_castillo",
+      "params": [
+        -0.02724609375000001,
+        -7.911303762066126
+      ],
+      "optimizer_objective": 6.861592945457723,
+      "objective_check": 6.861592945457723,
+      "raw_evaluated_fitness": 7.00159294545773,
+      "training_fitness": 7.001592945457722,
+      "train": {
+        "data_error": 6.861592945457731,
+        "rho_rrmse": 0.2665136730815688,
+        "velocity_rrmse": 0.257298116918343,
+        "flow_rrmse": 0.25758404703147636
+      },
+      "status": "accepted",
+      "converged": false,
+      "optimizer_message": "Maximum number of iterations has been exceeded.",
+      "default_feasible": true,
+      "physically_feasible": true,
+      "finite_metrics": true,
+      "within_declared_bounds": true,
+      "at_parameter_bound": false,
+      "accepted": true,
+      "runtime_seconds": 34.2042176449977,
+      "peak_memory_mb": 1385.06640625
+    }
+  ],
+  "mean_training_data_error": 7.387640703017129,
+  "mean_constraint_objective": 7.387640703017122,
+  "mean_training_fitness": 7.527640703017122,
+  "runtime_seconds": 145.6777567930003,
+  "peak_memory_mb": 1385.06640625
+}

@@ -1,0 +1,23 @@
+{
+  "baseline": "triangular",
+  "model": "meta_1/agent_2/attempt_2/model.py",
+  "correction": "downwind_window3",
+  "expression": "1 + (delta flat_downwind/right exp(c1*rho)) *_3 exp(c2*rho)",
+  "params": [
+    0.13270747982141273,
+    8.70403766073787
+  ],
+  "tree_nodes": 15,
+  "optimizer_objective": 7.49845982421528,
+  "training_fitness": 7.648459824215287,
+  "train": {
+    "data_error": 7.498459824215287,
+    "rho_rrmse": 0.2587396428069056,
+    "velocity_rrmse": 0.2881371092456864,
+    "flow_rrmse": 0.2546182912445677
+  },
+  "feasible": true,
+  "test_evaluated": false,
+  "runtime_seconds": 5.03891029100123,
+  "peak_memory_mb": 1214.375
+}

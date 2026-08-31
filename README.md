@@ -125,14 +125,14 @@ case-sensitive flux-function name, `v` is its matching velocity function, and
 | Triangular | `triangular_flux` | `triangular_v` | `V_0`, `l_eff`, `T` |
 | Weidmann | `Weidmann_flux` | `Weidmann_v` | `v_max`, `rho_max`, `lambda_w` |
 | Del Castillo | `del_castillo_flux` | `del_castillo_v` | `C_jam`, `V_max`, `rho_max`, `theta` |
-| IDM | `IDM_flux` | `inverse_IDM` | `s0`, `T`, `delta`, `v0` |
+| IDM | `IDM_flux` | `IDM_v` | `s0`, `T`, `delta`, `v0` |
 
 For example, an IDM baseline can be selected with
 
 ```yaml
 ansatz:
   flux: IDM_flux
-  v: inverse_IDM
+  v: IDM_v
   opt_coeffs: [s0, T, delta, v0]
 ```
 
@@ -191,6 +191,112 @@ are penalized similarly.
 
 The final test error printed after the search is `E_data` alone; it does not
 include the expression-length penalty.
+
+## Results obtained with Automodel
+
+### How the search was run
+
+Automodel was run on the I80 prediction problem while keeping each calibrated
+baseline FD fixed and searching only for a multiplicative DEC correction. The
+search used two meta-iterations, three structural workers per iteration, and
+two sequential attempts per worker, for 12 candidate expression families in
+total. Coefficients were fitted with differential evolution followed by bounded
+Nelder–Mead refinement. Expressions were ranked on the first 60% of the time
+interval using `E_data + 0.01 * number_of_tree_nodes` and were rejected if the
+corrected velocity was not finite and non-increasing with density. The final
+40% was evaluated once after the expressions and coefficients had been frozen.
+
+### Selected corrections and scores
+
+An Automodel search over the repository's DEC primitives found a three-cell
+right/downwind correction that improves all five calibrated basic diagrams on
+the held-out I80 prediction interval. The common multiplicative term is
+
+```text
+g[rho] = 1 + (delta flat_downwind exp(c1*rho)) *_3 exp(c2*rho).
+```
+
+Greenshields uses a local-exponential variant and IDM uses a positive
+exponential envelope. Expressions and fitted coefficients are registered in
+`automodel/final_model.py`; reusable implementations live in
+`src/sr_traffic/fd/diagrams.py`.
+
+| Baseline | Selected correction parameters | Identity test `E_data` | Corrected test `E_data` |
+| --- | --- | ---: | ---: |
+| Greenshields | `(0.5, -5.957330756, -10)` | 9.230426 | **6.121604** |
+| Weidmann | `(0.2017540235, 8.151159515)` | 7.651073 | **6.706620** |
+| Triangular | `(0.1327074798, 8.704037661)` | 7.918859 | **6.816831** |
+| IDM | `(0.6140045959, -10, -0.4413702102)` | 6.957441 | **6.828271** |
+| Del Castillo | `(0.1300955079, 9.519560936)` | 7.196903 | **6.822161** |
+
+The mean test error decreases from 7.790941 to 6.659097. In particular, the
+triangular correction improves the previous SR test score from 8.074263 to
+6.816831. The model structures were selected and coefficient-tuned on the first
+60% of I80; the final 40% was inspected only after freezing the selections.
+
+> [!IMPORTANT]
+> **Interpreting the ranking.** The current paper-compatible rank is based on
+> global, uncentered density and velocity rRMSE. A smooth prediction can score
+> well by matching average field magnitudes while reproducing congestion waves
+> poorly, so the lowest average rank should not by itself be interpreted as the
+> best qualitative traffic dynamics. Future evaluations should supplement the
+> paper metrics with interior-only rRMSE, density/velocity correlation, spatial-
+> and temporal-gradient rRMSE, flow rRMSE, and a structural image metric such as
+> SSIM. The generated comparison table already addresses one earlier limitation
+> by ranking all calibrated baselines, published SR models, and Automodel models
+> together.
+
+> [!WARNING]
+> **Automodel-Greenshields is not physically admissible over the full normalized
+> I80 density range.** Its stored `feasible: true` flag only certifies that the
+> corrected velocity is finite and non-increasing on uniform-density states. The
+> calibrated Greenshields parameter is `rho_max = 0.559951`, while normalized I80
+> density extends to 1, so both velocity and flux become negative for
+> `rho > rho_max`. The final simulation contains 4 negative interior
+> velocity/flow samples out of 13,500. The model is therefore more accurately
+> described as *monotonicity-feasible*, not fully admissible. A future search
+> should additionally enforce nonnegative velocity and flux, a jam density that
+> covers the modeled domain, positivity on nonuniform states, and optionally flux
+> concavity; refitting under those constraints would require a fresh external
+> validation check.
+
+### Stored artifacts and reproduction
+
+The search and reporting artifacts are organized as follows:
+
+- `meta_1/` and `meta_2/` contain every attempted structure, fitted parameters,
+  training metrics, and per-attempt evaluation notes.
+- `automodel/leaderboard.csv`, `automodel/expressions.md`, and
+  `automodel/training_fitness_progress.png` summarize the full search history.
+- `automodel/final_model.py` contains the frozen selections, while
+  `automodel/final_results.json` and `automodel/final_results.md` contain the
+  one-time held-out evaluation.
+- Generated paper-style plots and comparison tables are written to
+  `results/I80/prediction/automodel/`.
+
+To reproduce the frozen external check and regenerate its JSON/Markdown report,
+run
+
+```bash
+python -m automodel.finalize
+```
+
+To generate paper-style plots and a joint comparison table containing every
+baseline FD, its published SR model, and its frozen Automodel-corrected variant,
+run
+
+```bash
+python src/sr_traffic/fd/automodel_results.py --road_name I80 --task prediction
+```
+
+The command writes ten plots, a 15-row `error_table.tex`/`error_table.md`, and
+the raw `metrics.json` values under `results/I80/prediction/automodel/`. The
+table jointly ranks the five baselines, five published SR models, and five
+Automodel variants using the same four metrics as `fd/results.py`: training/test
+density and velocity rRMSE plus average rank. Use `--tables-only` to skip plot
+rendering. The search covers the five diagrams with calibration configs and
+stored I80 coefficients; Greenberg and Underwood are not included in this
+benchmark.
 
 ## Citing
 

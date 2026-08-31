@@ -1,0 +1,220 @@
+{
+  "protocol": "Frozen training-selected models evaluated once on the final 40% of the I80 prediction interval; test metrics were not used for selection.",
+  "results": {
+    "greenshields": {
+      "baseline": "Greenshields",
+      "correction": "local_exponential_downwind_window3",
+      "expression": "exp(c0*rho) + (delta flat_downwind exp(c1*rho)) *_3 exp(c2*rho)",
+      "params": [
+        0.5,
+        -5.957330755601453,
+        -10.0
+      ],
+      "n_params": 3,
+      "tree_nodes": 18,
+      "source": "meta_2/agent_3/attempt_2",
+      "feasible": true,
+      "train": {
+        "data_error": 6.2390238713093495,
+        "rho_rrmse": 0.25687892644268967,
+        "velocity_rrmse": 0.24247411114557824,
+        "flow_rrmse": 0.2069119992185694
+      },
+      "training_fitness": 6.419023871309349,
+      "identity_test": {
+        "data_error": 9.230426352761873,
+        "rho_rrmse": 0.29431697258848943,
+        "velocity_rrmse": 0.313027229968231,
+        "flow_rrmse": 0.2968993680561964
+      },
+      "selected_test": {
+        "data_error": 6.121604215701355,
+        "rho_rrmse": 0.2433173343000963,
+        "velocity_rrmse": 0.25145329415842277,
+        "flow_rrmse": 0.2190318237780953
+      },
+      "test_data_error_delta": -3.1088221370605176,
+      "runtime_seconds": {
+        "train": 0.9322310159986955,
+        "identity_test": 0.3505148599979293,
+        "selected_test": 0.42313850199934677,
+        "total": 4.786546947001625
+      },
+      "peak_memory_mb_after_model": 1202.7890625
+    },
+    "weidmann": {
+      "baseline": "Weidmann",
+      "correction": "downwind_window3",
+      "expression": "1 + (delta flat_downwind exp(c1*rho)) *_3 exp(c2*rho)",
+      "params": [
+        0.201754023475905,
+        8.151159515206118
+      ],
+      "n_params": 2,
+      "tree_nodes": 15,
+      "source": "meta_1/agent_2/attempt_2",
+      "feasible": true,
+      "train": {
+        "data_error": 6.214391932557375,
+        "rho_rrmse": 0.2510271975285285,
+        "velocity_rrmse": 0.2475342092562575,
+        "flow_rrmse": 0.26173891633861196
+      },
+      "training_fitness": 6.364391932557376,
+      "identity_test": {
+        "data_error": 7.651073311125998,
+        "rho_rrmse": 0.2648966681196186,
+        "velocity_rrmse": 0.28783888104570693,
+        "flow_rrmse": 0.27096276138391917
+      },
+      "selected_test": {
+        "data_error": 6.70662010845664,
+        "rho_rrmse": 0.24249887050053648,
+        "velocity_rrmse": 0.27445710042754745,
+        "flow_rrmse": 0.2737910737591445
+      },
+      "test_data_error_delta": -0.944453202669358,
+      "runtime_seconds": {
+        "train": 0.4327065190009307,
+        "identity_test": 0.14402250799685135,
+        "selected_test": 0.40302423699904466,
+        "total": 1.521414259001176
+      },
+      "peak_memory_mb_after_model": 1403.3828125
+    },
+    "triangular": {
+      "baseline": "Triangular",
+      "correction": "downwind_window3",
+      "expression": "1 + (delta flat_downwind exp(c1*rho)) *_3 exp(c2*rho)",
+      "params": [
+        0.13270747982141273,
+        8.70403766073787
+      ],
+      "n_params": 2,
+      "tree_nodes": 15,
+      "source": "meta_1/agent_2/attempt_2",
+      "feasible": true,
+      "train": {
+        "data_error": 7.498459824215287,
+        "rho_rrmse": 0.2587396428069056,
+        "velocity_rrmse": 0.2881371092456864,
+        "flow_rrmse": 0.2546182912445677
+      },
+      "training_fitness": 7.648459824215287,
+      "identity_test": {
+        "data_error": 7.918858943098496,
+        "rho_rrmse": 0.2687286105969731,
+        "velocity_rrmse": 0.29353383571334724,
+        "flow_rrmse": 0.27974266640099227
+      },
+      "selected_test": {
+        "data_error": 6.816831189538496,
+        "rho_rrmse": 0.24597154794331252,
+        "velocity_rrmse": 0.2753808660621515,
+        "flow_rrmse": 0.28696743678687225
+      },
+      "test_data_error_delta": -1.1020277535600007,
+      "runtime_seconds": {
+        "train": 0.32724552700165077,
+        "identity_test": 0.14416930999868782,
+        "selected_test": 0.39463802299724193,
+        "total": 1.4806160679981986
+      },
+      "peak_memory_mb_after_model": 1476.9921875
+    },
+    "idm": {
+      "baseline": "IDM",
+      "correction": "exponential_downwind_window3",
+      "expression": "exp(a * ((delta flat_downwind exp(b*rho)) *_3 exp(c*rho)))",
+      "params": [
+        0.6140045959036415,
+        -10.0,
+        -0.4413702101694601
+      ],
+      "n_params": 3,
+      "tree_nodes": 16,
+      "source": "meta_2/agent_3/attempt_1",
+      "feasible": true,
+      "train": {
+        "data_error": 6.982831919163061,
+        "rho_rrmse": 0.2582994163965412,
+        "velocity_rrmse": 0.2700704535347535,
+        "flow_rrmse": 0.20521328834354308
+      },
+      "training_fitness": 7.142831919163061,
+      "identity_test": {
+        "data_error": 6.957441041806822,
+        "rho_rrmse": 0.2577176514759305,
+        "velocity_rrmse": 0.2696858041385702,
+        "flow_rrmse": 0.2051136913061456
+      },
+      "selected_test": {
+        "data_error": 6.828270613128085,
+        "rho_rrmse": 0.25841466495286336,
+        "velocity_rrmse": 0.2641728093499804,
+        "flow_rrmse": 0.20578358772118058
+      },
+      "test_data_error_delta": -0.12917042867873718,
+      "runtime_seconds": {
+        "train": 0.9740306959974987,
+        "identity_test": 1.8498332249982923,
+        "selected_test": 1.3921346480019565,
+        "total": 4.992729508998309
+      },
+      "peak_memory_mb_after_model": 1576.8046875
+    },
+    "del_castillo": {
+      "baseline": "Del Castillo",
+      "correction": "downwind_window3",
+      "expression": "1 + (delta flat_downwind exp(c1*rho)) *_3 exp(c2*rho)",
+      "params": [
+        0.13009550793468766,
+        9.519560935812226
+      ],
+      "n_params": 2,
+      "tree_nodes": 15,
+      "source": "meta_1/agent_2/attempt_2",
+      "feasible": true,
+      "train": {
+        "data_error": 6.315030738886305,
+        "rho_rrmse": 0.25559213856321206,
+        "velocity_rrmse": 0.24692766852341583,
+        "flow_rrmse": 0.2587203896079443
+      },
+      "training_fitness": 6.4650307388863055,
+      "identity_test": {
+        "data_error": 7.1969032893009315,
+        "rho_rrmse": 0.2566979467037911,
+        "velocity_rrmse": 0.2793639739552619,
+        "flow_rrmse": 0.27963276016281097
+      },
+      "selected_test": {
+        "data_error": 6.822161322650693,
+        "rho_rrmse": 0.23987876039310532,
+        "velocity_rrmse": 0.2808939422011109,
+        "flow_rrmse": 0.2896759863874869
+      },
+      "test_data_error_delta": -0.3747419666502383,
+      "runtime_seconds": {
+        "train": 0.4181597659990075,
+        "identity_test": 0.24417960199934896,
+        "selected_test": 0.4880009539992898,
+        "total": 1.8360127279993321
+      },
+      "peak_memory_mb_after_model": 1589.50390625
+    }
+  },
+  "summary": {
+    "mean_identity_test_data_error": 7.790940587618825,
+    "mean_selected_test_data_error": 6.6590974898950535,
+    "mean_test_data_error_delta": -1.1318430977237712,
+    "all_selected_feasible": true,
+    "test_improvements_over_identity": 5,
+    "total_baselines": 5,
+    "triangular_readme_sr_test_data_error": 8.0742627959,
+    "triangular_selected_test_data_error": 6.816831189538496,
+    "triangular_vs_readme_sr_delta": -1.2574316063615036,
+    "runtime_seconds": 14.617671572999825,
+    "peak_memory_mb": 1589.50390625
+  }
+}

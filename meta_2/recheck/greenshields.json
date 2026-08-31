@@ -1,0 +1,24 @@
+{
+  "baseline": "greenshields",
+  "model": "meta_2/agent_3/attempt_2/model.py",
+  "correction": "local_exponential_downwind_window3",
+  "expression": "exp(c0*rho) + ((delta flat_right_P exp(c1*rho)) *_3 exp(c2*rho))",
+  "params": [
+    0.5,
+    -5.957330755601453,
+    -10.0
+  ],
+  "tree_nodes": 18,
+  "optimizer_objective": 6.239023871309343,
+  "training_fitness": 6.419023871309349,
+  "train": {
+    "data_error": 6.2390238713093495,
+    "rho_rrmse": 0.25687892644268967,
+    "velocity_rrmse": 0.24247411114557824,
+    "flow_rrmse": 0.2069119992185694
+  },
+  "feasible": true,
+  "test_evaluated": false,
+  "runtime_seconds": 4.8974474650021875,
+  "peak_memory_mb": 1229.3515625
+}
