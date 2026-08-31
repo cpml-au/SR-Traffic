@@ -1,6 +1,6 @@
 from dctkit.dec import cochain as C
 from sr_traffic.data.data import preprocess_data, build_dataset
-import sr_traffic.fd.fund_diagrams_def as tf_utils
+import sr_traffic.fd.diagrams as tf_utils
 from sr_traffic.utils.godunov import godunov_solver
 from sr_traffic.sr.utils import resolve_function
 import jax.numpy as jnp

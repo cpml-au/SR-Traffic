@@ -17,7 +17,7 @@ import numpy.typing as npt
 
 def resolve_function(full_name: str):
     # helper to resolve function from string
-    module = importlib.import_module("sr_traffic.fd.fund_diagrams_def")
+    module = importlib.import_module("sr_traffic.fd.diagrams")
     return getattr(module, full_name)
 
 
@@ -307,8 +307,6 @@ def sr_traffic_plots(
     step: int,
     output_path: str,
 ):
-    os.chdir(output_path)
-
     x_sampled = S.node_coords
     x_sampled_circ = (x_sampled[1:] + x_sampled[:-1]) / 2
 
@@ -383,13 +381,11 @@ def sr_traffic_plots(
     plt.xlabel(r"$\rho$")
     plt.ylabel(r"$\rho V(\rho)$")
     plt.legend()
-    plt.savefig("flux.png", dpi=300)
+    plt.savefig(os.path.join(output_path, "flux.png"), dpi=300)
 
-    plt.clf()
+    plt.close()
 
-    plt.figure(1, figsize=(20, 10))
-
-    _, axes = plt.subplots(3, 2, num=1)
+    _, axes = plt.subplots(3, 2, num=1, figsize=(20, 10), clear=True)
 
     x_mesh, t_mesh = np.meshgrid(x_sampled_circ[1:-3], t_sampled_circ)
 
@@ -459,4 +455,5 @@ def sr_traffic_plots(
         axes[i, 1].set_ylabel(r"x")
     fig = plt.gcf()
     fig.set_size_inches(20, 10)
-    plt.savefig("plots.png", dpi=300)
+    plt.savefig(os.path.join(output_path, "plots.png"), dpi=300)
+    plt.close()

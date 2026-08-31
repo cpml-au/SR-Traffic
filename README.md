@@ -26,7 +26,7 @@ To reproduce the paper's figures and error tables using the precomputed model
 parameters, run
 
 ```bash
-python src/sr_traffic/fd/fund_diagrams_results.py --road_name {road_name} --task {task_name}
+python src/sr_traffic/fd/results.py --road_name {road_name} --task {task_name}
 ```
 
 where `{road_name}` is either `US101` or `I80`, and `{task_name}` is either
@@ -40,21 +40,52 @@ directory.
 To re-calibrate a given fundamental diagram, run
 
 ```bash
-python src/sr_traffic/fd/fund_diagrams_calibration.py --config src/sr_traffic/fd/configs/{fnd_name}.yaml
+python src/sr_traffic/fd/calibration.py --config src/sr_traffic/fd/configs/{fnd_name}.yaml
 ```
 
-where`{fnd_name}` is either `greenshields`, `triangular`, `Weidmann`, `del_castillo`, or `idm`.
+where `{fnd_name}` is either `greenshields`, `triangular`, `weidmann`,
+`del_castillo`, or `idm`.
 
-Finally, to perform a run of SR-Traffic, run
+Each file in `src/sr_traffic/fd/configs/` defines one calibration problem:
+
+- `road_name` selects the dataset (`I80` or `US101`).
+- `task` selects the data split. `prediction` calibrates on earlier time points
+  and tests on later ones, while `reconstruction` calibrates on a subset of
+  spatial locations and tests on the held-out locations.
+- `flux` is the case-sensitive name of the fundamental-diagram function in
+  `src/sr_traffic/fd/diagrams.py`.
+- `bounds` contains two lists: the lower bounds followed by the upper bounds.
+  Their entries follow the order of the selected flux function's parameters
+  after density, as listed below.
+- `opt.num_ind` is the population size used by the PyGMO simple evolutionary
+  algorithm, and `opt.num_gen` is the number of generations. The supplied
+  values (`1000` and `100`) are full calibration settings and can be reduced
+  for a quick trial.
+
+| Config | Parameter order in `bounds` | Meaning |
+| --- | --- | --- |
+| `greenshields` | `v_max`, `rho_max` | Free-flow speed and jam density |
+| `triangular` | `V_0`, `l_eff`, `T` | Free-flow speed, effective vehicle length, and time headway |
+| `weidmann` | `v_max`, `rho_max`, `lambda_w` | Free-flow speed, jam density, and shape parameter |
+| `del_castillo` | `C_jam`, `V_max`, `rho_max`, `theta` | Congested-wave speed scale, free-flow speed, jam density, and shape parameter |
+| `idm` | `s0`, `T`, `delta`, `v0` | Minimum gap, time headway, acceleration exponent, and desired speed |
+
+Calibration minimizes the average of the normalized squared density and
+velocity errors on the training split. The data and parameters are
+nondimensionalized by the preprocessing code, so the bounds are expressed in
+the model's normalized units.
+
+Finally, to perform a new model search with SR-Traffic, run
 
 ```bash
-python src/sr_traffic/sr/sr_traffic.py
+python -m sr_traffic.sr.sr_traffic
 ```
 
 You can change the parameters of the algorithm by modifying `sr_traffic.yaml`.
 The provided defaults use a seeded evolution with one individual and one
 generation. This is intended as a quick smoke test of the implementation, not
-as a search for a new model.
+as a search for a new model. Run artifacts, including `run.log`, are written to
+`results/<road_name>/<task_name>/sr/` rather than the repository root.
 
 ## Citing
 

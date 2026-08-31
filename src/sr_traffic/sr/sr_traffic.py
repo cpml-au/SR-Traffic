@@ -16,8 +16,11 @@ import warnings
 import pygmo as pg
 from sr_traffic.sr.utils import *
 import os
+import sys
 import time
 import gc
+import traceback
+from contextlib import redirect_stderr, redirect_stdout
 
 warnings.filterwarnings("ignore")
 
@@ -29,6 +32,32 @@ os.environ["JAX_LOG_COMPILES"] = "0"
 # choose precision and whether to use GPU or CPU
 # needed for context of the plots at the end of the evolution
 config()
+
+
+class Tee:
+    """Write console output to the terminal and a run log."""
+
+    def __init__(self, *streams):
+        self.streams = streams
+
+    def write(self, data):
+        for stream in self.streams:
+            stream.write(data)
+        return len(data)
+
+    def flush(self):
+        for stream in self.streams:
+            stream.flush()
+
+    def fileno(self):
+        return self.streams[0].fileno()
+
+    def isatty(self):
+        return self.streams[0].isatty()
+
+    @property
+    def encoding(self):
+        return self.streams[0].encoding
 
 
 def eval_MSE_sol(
@@ -398,7 +427,8 @@ def sr_traffic(
         )
 
         # test error
-        print(f"Best MSE on the test set: ", gpsr.score(X_test))
+        test_mse = -gpsr.score(X_test)
+        print("Best MSE on the test set:", test_mse)
 
     best_ind = gpsr.get_best_individuals()[0]
     best_consts = best_ind.consts
@@ -435,27 +465,40 @@ if __name__ == "__main__":
         seed = ["SquareP0(ExpP0(conv_3P0(delP1(flat_lin_rightP0(rho)), MFP0(rho, c))))"]
     if not set_seed:
         seed = None
-    output_path = "."
+    repository_root = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "..")
+    )
+    output_path = os.path.join(repository_root, "results", road_name, task, "sr")
+    os.makedirs(output_path, exist_ok=True)
 
     dt = data_info["delta_t_refined"]
 
-    sr_traffic(
-        regressor_params,
-        config_file_data,
-        data_info["density"],
-        data_info["vP0"][:-1],
-        data_info["fP0"][:-1],
-        X_tr,
-        X_val,
-        X_tr_val,
-        X_test,
-        data_info["S"],
-        dt,
-        data_info["num_t_points"],
-        data_info["step"],
-        data_info["rho_0"],
-        data_info["rho_bnd"],
-        data_info["t_sampled_circ"],
-        seed,
-        output_path,
-    )
+    log_path = os.path.join(output_path, "run.log")
+    with open(log_path, "w", buffering=1) as log_file:
+        with redirect_stdout(Tee(sys.stdout, log_file)), redirect_stderr(
+            Tee(sys.stderr, log_file)
+        ):
+            try:
+                sr_traffic(
+                    regressor_params,
+                    config_file_data,
+                    data_info["density"],
+                    data_info["vP0"][:-1],
+                    data_info["fP0"][:-1],
+                    X_tr,
+                    X_val,
+                    X_tr_val,
+                    X_test,
+                    data_info["S"],
+                    dt,
+                    data_info["num_t_points"],
+                    data_info["step"],
+                    data_info["rho_0"],
+                    data_info["rho_bnd"],
+                    data_info["t_sampled_circ"],
+                    seed,
+                    output_path,
+                )
+            except Exception:
+                traceback.print_exc()
+                raise SystemExit(1)

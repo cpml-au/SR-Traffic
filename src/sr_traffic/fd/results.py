@@ -5,7 +5,7 @@ from dctkit.dec import cochain as C
 from dctkit.dec.flat import flat
 from dctkit import config
 from sr_traffic.data.data import preprocess_data, build_dataset
-from sr_traffic.fd import fund_diagrams_def as tf_utils
+from sr_traffic.fd import diagrams as tf_utils
 from sr_traffic.utils import flat as tf_flat
 from sr_traffic.sr.primitives import *
 from sr_traffic.utils.godunov import godunov_solver
