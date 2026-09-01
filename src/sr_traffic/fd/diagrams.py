@@ -1,7 +1,7 @@
 import jax.numpy as jnp
 import dctkit.dec.cochain as C
 from dctkit.mesh.simplex import SimplicialComplex
-from jax import vmap, lax, jacfwd
+from jax import vmap, grad, lax, jacfwd
 from functools import partial
 import numpy.typing as npt
 from typing import Callable
@@ -91,46 +91,33 @@ def IDM_eq(
 
 @partial(vmap, in_axes=(0, None, None, None, None))
 def inverse_IDM(s_target: npt.NDArray, s0: float, T: float, delta: float, v0: float):
-    """Invert the equilibrium IDM spacing relation on ``0 <= v <= v0``.
+    def f(v):
+        return IDM_eq(s_target, v, s0, T, delta, v0)
 
-    The previous unconstrained Newton iteration could step to negative velocity;
-    fractional values of ``delta`` then produced NaNs.  On the physical interval
-    the equilibrium equation is monotone, so fixed-iteration bisection is both
-    robust and compatible with JAX transformations.
-    """
+    der_f = grad(f)
 
-    spacing = jnp.maximum(s_target, s0)
+    def body_fun(val):
+        v, _ = val
+        f_val = f(v)
+        f_prime = der_f(v)
+        v_next = v - f_val / f_prime
+        err = jnp.abs(f_val)
+        return (v_next, err)
 
-    def body_fun(_, bounds):
-        lower, upper = bounds
-        midpoint = 0.5 * (lower + upper)
-        residual = IDM_eq(spacing, midpoint, s0, T, delta, v0)
-        lower = jnp.where(residual > 0, midpoint, lower)
-        upper = jnp.where(residual > 0, upper, midpoint)
-        return lower, upper
+    def cond_fun(val):
+        _, err = val
+        return err > 1e-6
 
-    lower, upper = lax.fori_loop(0, 64, body_fun, (0.0, v0))
-    velocity = 0.5 * (lower + upper)
-    return jnp.where(s_target > s0, velocity, 0.0)
-
-
-def IDM_v(rho: npt.NDArray, s0: float, T: float, delta: float, v0: float):
-    """Evaluate the equilibrium IDM velocity as a function of density.
-
-    ``inverse_IDM`` accepts the net vehicle spacing ``s`` rather than density.
-    This wrapper performs the same ``s = 1 / rho - 1`` conversion used by the
-    flux function and returns zero once the spacing reaches the minimum gap.
-    Clipping density away from zero keeps the conversion finite.
-    """
-
-    rho_safe = jnp.maximum(rho, jnp.finfo(jnp.asarray(rho).dtype).eps)
-    spacing = 1 / rho_safe - 1
-    return inverse_IDM(spacing, s0, T, delta, v0)
+    v0_guess = 0.5 * v0
+    init = (v0_guess, jnp.inf)
+    v_final, _ = lax.while_loop(cond_fun, body_fun, init)
+    return v_final
 
 
 def IDM_flux(rho: C.Cochain, s0: float, T: float, delta: float, v0: float):
     rho_coeffs = rho.coeffs.ravel()
-    v = IDM_v(rho_coeffs, s0, T, delta, v0)
+    s = 1 / rho_coeffs - 1
+    v = inverse_IDM(s, s0, T, delta, v0)
     return C.Cochain(rho.dim, rho.is_primal, rho.complex, rho_coeffs * v)
 
 
@@ -156,71 +143,6 @@ def del_castillo_flux(
 ):
     v = del_castillo_v(rho.coeffs, C_jam, V_max, rho_max, theta)
     return C.Cochain(rho.dim, rho.is_primal, rho.complex, rho.coeffs * v)
-
-
-def downwind_window3_correction(
-    rho: C.Cochain,
-    flat_downwind: Callable,
-    inner_slope: float,
-    kernel_slope: float,
-):
-    """Return the selected three-point DEC multiplicative correction.
-
-    The expression is
-    ``1 + (delta flat_downwind exp(inner_slope*rho)) *_3 exp(kernel_slope*rho)``.
-    It was selected on the first 60% of the I80 prediction interval and uses
-    only primitives enabled in ``sr_traffic.yaml``.
-    """
-
-    ones = C.Cochain(rho.dim, rho.is_primal, rho.complex, jnp.ones_like(rho.coeffs))
-    gradient = C.codifferential(flat_downwind(C.exp(C.scalar_mul(rho, inner_slope))))
-    kernel = C.exp(C.scalar_mul(rho, kernel_slope))
-    return C.add(ones, C.convolution(gradient, kernel, 3))
-
-
-def exponential_downwind_window3_correction(
-    rho: C.Cochain,
-    flat_downwind: Callable,
-    amplitude: float,
-    inner_slope: float,
-    kernel_slope: float,
-):
-    """Return a positive exponential envelope around the conv-3 response."""
-
-    gradient = C.codifferential(flat_downwind(C.exp(C.scalar_mul(rho, inner_slope))))
-    kernel = C.exp(C.scalar_mul(rho, kernel_slope))
-    response = C.convolution(gradient, kernel, 3)
-    return C.exp(C.scalar_mul(response, amplitude))
-
-
-def local_exponential_downwind_window3_correction(
-    rho: C.Cochain,
-    flat_downwind: Callable,
-    local_slope: float,
-    inner_slope: float,
-    kernel_slope: float,
-):
-    """Return a local exponential plus the selected conv-3 response."""
-
-    local = C.exp(C.scalar_mul(rho, local_slope))
-    gradient = C.codifferential(flat_downwind(C.exp(C.scalar_mul(rho, inner_slope))))
-    kernel = C.exp(C.scalar_mul(rho, kernel_slope))
-    return C.add(local, C.convolution(gradient, kernel, 3))
-
-
-def multiplicatively_corrected_flux(
-    rho: C.Cochain,
-    baseline_flux: Callable,
-    baseline_coefficients: npt.NDArray,
-    correction: Callable,
-    flat_downwind: Callable,
-    correction_coefficients: npt.NDArray,
-):
-    """Apply a fitted DEC correction to any basic fundamental diagram."""
-
-    baseline = baseline_flux(rho, *baseline_coefficients)
-    multiplier = correction(rho, flat_downwind, *correction_coefficients)
-    return C.cochain_mul(baseline, multiplier)
 
 
 def define_flux_der(S: SimplicialComplex, flux: Callable):
